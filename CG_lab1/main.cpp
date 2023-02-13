@@ -618,6 +618,7 @@ void Render()
 	g_pImmediateContext->DrawIndexed( 36, 0, 0 );        // 36 vertices needed for 12 triangles in a triangle list
 
     pAnnotation->EndEvent();
+    pAnnotation->Release();
 
 
     //
