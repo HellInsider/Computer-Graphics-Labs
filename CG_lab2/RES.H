@@ -1,0 +1,163 @@
+#ifndef __RES_H_
+#define __RES_H_
+
+#include <ostream>
+#include <istream>
+#include <fstream>
+#include <map>
+#include <string>
+
+#include "def.h"
+
+namespace ragl
+{
+  typedef vec color3;
+
+  /* Resource manager class */
+  template<class type>
+    class resource_manager
+    {
+    public:
+      /* Resource stock */
+      std::map<std::string, type *> Stock;
+
+      resource_manager & Add( type *Res )
+      {
+        Stock[Res->Name] = Res;
+        return *this;
+      } 
+
+      ~resource_manager( void )
+      {
+        for (auto r : Stock)
+          delete r.second;
+      } 
+
+      type * Find( const std::string &Name )
+      {
+        if (Stock.count(Name) == 0)
+          return NULL;
+        return Stock[Name];
+      } 
+    }; 
+
+  /* Shader class */
+    class shader
+    {
+    private:
+      VOID Log(const std::string& Stage, const std::string& Text)
+      {
+        std::ofstream("SV{SHAD}30.LOG", std::ios_base::app) << Stage << ":" << Text << "\n";
+      } 
+
+      std::string LoadTextFile(const std::string& FileName)
+      {
+        return std::string((std::istreambuf_iterator<char>(std::ifstream(FileName))),
+          std::istreambuf_iterator<char>());
+      } 
+
+      HRESULT CompileShaderFromFile(const CHAR* szFileName, LPCSTR szEntryPoint, LPCSTR szShaderModel, ID3DBlob** ppBlobOut, const D3D_SHADER_MACRO* defines = nullptr);
+
+      /* Shader name */
+      const std::string PostfixVert = "_vsh.hlsl";
+      const std::string PostfixPix = "_psh.hlsl";
+
+      ID3D11VertexShader* VertexShader = nullptr;
+      ID3D11PixelShader* PixelShader = nullptr;
+      ID3D11InputLayout* InputLayout = nullptr;
+
+    public:
+      std::string Name;
+      shader(VOID)
+      {
+      } 
+
+      shader(const std::string& FileNamePrefix, const D3D_SHADER_MACRO* defines = nullptr);
+
+      ~shader(VOID)
+      {
+        if (InputLayout) InputLayout->Release();
+        if (VertexShader) VertexShader->Release();
+        if (PixelShader) PixelShader->Release();
+      } 
+
+      VOID Apply(VOID);
+  };
+
+ 
+  class texture
+  {
+  public:
+    /* Texture name */
+    std::string Name;
+
+    /* Image size */
+    INT W, H;
+
+    ID3D11ShaderResourceView* TextureSRV = nullptr;
+    ID3D11SamplerState* Sampler= nullptr;
+    ID3D11Texture2D* Texture = nullptr;
+
+    texture( VOID )
+    {
+    } 
+
+    texture( const std::string &FileName ) : Name(FileName)
+    {
+    } 
+
+    texture(const std::string& NewName, INT NewW, INT NewH, INT BytesPerPixel, BYTE* Pixels);
+
+    ~texture( VOID )
+    {
+      if (Sampler) Sampler->Release();
+      if (TextureSRV) TextureSRV->Release();
+      if (Texture) Texture->Release();
+    } 
+
+    VOID Apply( UINT slot );
+  }; 
+
+  class material
+  {
+  public:
+    std::string Name;
+
+    struct material_constants
+    {
+      /* Illumination coefficients (anbient, diffuse, specular) */
+      color3 Ka;
+      FLT Ph;
+      color3 Kd;
+      FLT Trans;
+      color3 Ks;
+      BOOL IsTex0, IsTex1;
+
+    } MaterialData;
+    /* Shader pointer */
+    shader *Shd;
+    /* Texture pointers */
+    texture *Tex[2];
+
+    ID3D11Buffer* ConstBuffer = nullptr;
+
+    material( VOID )
+    {
+    } 
+
+    material( const std::string &NewName,
+              const color3 &NewKa = color3(0.1, 0.3, 0.2), const color3 &NewKd = color3(0.9), const color3 &NewKs = color3(0.2),
+              FLT NewPh = 30, FLT NewTrans = 0,
+              shader *NewShd = NULL, texture *NewTex0 = NULL, texture *NewTex1 = NULL );
+
+
+    VOID Apply( VOID );
+
+    ~material(VOID)
+    {
+      if (ConstBuffer) ConstBuffer->Release();
+    }
+  }; 
+} 
+
+#endif /* __RES_H_ */
