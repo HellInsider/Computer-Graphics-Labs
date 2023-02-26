@@ -1,20 +1,9 @@
-/* FILE NAME   : U_TARAKAN.CPP
- * PURPOSE     : tarakan class implementation module
- * PROGRAMMER  : AK5a.
- * LAST UPDATE : 25.07.2017
- */
-
 #include "u_tarakan.h"
 #include "anim.h"
 
-INT ragl::tarakan::Taracounter = 0;
+INT tarakan::Taracounter = 0;
 
-/* Class constructor.
- * ARGUMENT:
- *   - animation interface pointer:
- *       ragl::anim *Ani;
- */
-ragl::tarakan::tarakan( ragl::anim *Ani, const ragl::vec2 &position ) : unit(), 
+tarakan::tarakan( anim *Ani, const vec2 &position ) : unit(), 
                                       Pos(position), 
                                       Dir(!vec2(0, -1)),
                                       OldDir(Dir), NewDir(Dir),
@@ -27,15 +16,9 @@ ragl::tarakan::tarakan( ragl::anim *Ani, const ragl::vec2 &position ) : unit(),
     ;
     sph.Prims[24]->Mtl = Ani->AddMaterial("tarakan", vec(0.0), vec(0.0, 0.0, 0.1), vec(0.001), 80, 0, Ani->AddShader("shaders\\tarakan"));
 
-} /* End of 'my_unit' function */
+}
 
-/* Interframe animation response function.
- * ARGUMENT:
- *   - animation interface pointer:
- *       anim *Ani;
- * RETURNS: None.
- */
-VOID ragl::tarakan::Response( ragl::anim *Ani )
+VOID tarakan::Response( anim *Ani )
 {
   static DBL TimeShift;
   static INT Last;
@@ -64,35 +47,11 @@ VOID ragl::tarakan::Response( ragl::anim *Ani )
   if (Pos.VecLen() > 50)
     Pos = vec2(1, 1);
   sph.Transform = matr::MatrRotationY(-vec::RadianToDegree(vec2::AngleVecPlane(vec2(-1, 0), Dir))).MatrTranslate(vec(Pos.GetX(), 0.3, Pos.GetZ()));
-  //if (Ani->GetTime() - TimeShift > 10)
-  //{
-  //  if (Last == Taracounter)
-  //    TimeShift = Ani->GetTime();
-  //  Last = Id;
-  //  if (Speed < 1)
-  //  {
-  //    Speed += ((rand() % 258) / 129.0) - 1;
-  //  }
-  //  else
-  //    Speed -= ((rand() % 258) / 129.0) - 1; //Speed -= (((rand() / 129) % 2) - 1) / 5;
-  //  Dir = !(Dir + vec(Speed / 5, 0, Speed / 5));
-  //  Pos += vec(Dir.GetX() * Speed / 10000000.0, 0, Dir.GetZ() * Speed / 10000000.0) * 0.00003;
-  //  if (Pos.VecLen() > 99)
-  //    Pos = vec(1, 0, 1);
-  //  sph.Transform = sph.Transform.MatrRotateY(vec::RadianToDegree(vec::AngleVec(vec(1, 0, 0), Dir))).MatrTranslate(Pos);
-  //}
-} /* End of 'Response' function */
+}
 
-/* Render unit function.
- * ARGUMENT:
- *   - animation interface pointer:
- *       anim *Ani;
- * RETURNS: None.
- */
-VOID ragl::tarakan::Render( ragl::anim *Ani )
+VOID tarakan::Render( anim *Ani )
 {
   ///glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   sph.Draw(matr());
-} /* End of 'Render' function */
+}
 
-/* END OF 'U_TARAKAN.CPP' FILE */

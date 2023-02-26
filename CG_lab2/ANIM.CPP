@@ -2,61 +2,61 @@
 #include "list_units.h"
 
 
-ragl::anim ragl::anim::Instance;
+anim anim::Instance;
 
-ragl::anim::anim( VOID ) : win(), render(win::hWnd), input(win::hWnd, win::MouseWheel), timer()
+anim::anim( VOID ) : win(), render(win::hWnd), input(win::hWnd, win::MouseWheel), timer()
 {
 }
 
-ragl::anim::~anim( VOID )
+anim::~anim( VOID )
 {
   Units.Walk([](unit *Uni){ delete Uni; });
 }
 
-ragl::anim * ragl::anim::GetAnim()
+anim * anim::GetAnim()
 {
   return &Instance;
 }
 
-ragl::anim & ragl::anim::operator<<( ragl::unit *Uni )
+anim & anim::operator<<( unit *Uni )
 {
   Units << Uni;
   return *this;
 } 
 
-VOID ragl::anim::Init( VOID )
+VOID anim::Init( VOID )
 {
   *this << new control(this, 0);
   IsInit = 1;
 } 
 
-VOID ragl::anim::Close( VOID )
+VOID anim::Close( VOID )
 {
 } 
 
-VOID ragl::anim::Resize( VOID )
+VOID anim::Resize( VOID )
 {
   render::Resize(W, H);
 }
 
-VOID ragl::anim::Erase( HDC hDC )
+VOID anim::Erase( HDC hDC )
 {
 }
 
-VOID ragl::anim::Paint( HDC hDC )
+VOID anim::Paint( HDC hDC )
 {
 } 
 
-VOID ragl::anim::Timer( VOID )
+VOID anim::Timer( VOID )
 {
   Idle();
 } 
 
-VOID ragl::anim::Activate( VOID )
+VOID anim::Activate( VOID )
 {
 } 
 
-VOID ragl::anim::Idle( VOID )
+VOID anim::Idle( VOID )
 {
   input::Response(win::MouseWheel);
   win::MouseWheel = 0;

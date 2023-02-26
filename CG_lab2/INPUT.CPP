@@ -1,25 +1,25 @@
 #include "input.h"
 
-ragl::input::input( HWND hWnd, INT MouseWheel ) : keyboard(), mouse(hWnd, MouseWheel), joystick()
+input::input( HWND hWnd, INT MouseWheel ) : keyboard(), mouse(hWnd, MouseWheel), joystick()
 {
 
 } 
 
-VOID ragl::input::Response( INT MouseWheel )
+VOID input::Response( INT MouseWheel )
 {
   keyboard::Response();
   mouse::Response(MouseWheel);
   joystick::Response();
 } 
 
-ragl::keyboard::keyboard( VOID )
+keyboard::keyboard( VOID )
 {
   memset(Keys, 0, 256 * sizeof(BYTE));
   memset(KeysOld, 0, 256 * sizeof(BYTE));
   memset(KeysClick, 0, 256 * sizeof(BOOL));
 } 
 
-VOID ragl::keyboard::Response( VOID )
+VOID keyboard::Response( VOID )
 {
    GetKeyboardState(Keys);   
    for (INT i = 0; i < 256; i++)   
@@ -30,7 +30,7 @@ VOID ragl::keyboard::Response( VOID )
    memcpy(KeysOld, Keys, 256);
 } 
 
-ragl::mouse::mouse( HWND hWnd, INT MouseWheel ) : hWnd(hWnd), 
+mouse::mouse( HWND hWnd, INT MouseWheel ) : hWnd(hWnd), 
                                                   Mx(0), My(0), Mz(0), Mdx(0), Mdy(0), Mdz(MouseWheel)
 {
   memset(Buttons, 0, 3 * sizeof(BYTE));
@@ -38,7 +38,7 @@ ragl::mouse::mouse( HWND hWnd, INT MouseWheel ) : hWnd(hWnd),
   memset(ButtonsClick, 0, 3 * sizeof(BOOL));
 } 
 
-VOID ragl::mouse::Response( INT MouseWheel )
+VOID mouse::Response( INT MouseWheel )
 {
   /* Mouse buttons handle */
   BYTE tmpKeys[256];
@@ -65,7 +65,7 @@ VOID ragl::mouse::Response( INT MouseWheel )
   Mz += MouseWheel; 
 } 
 
-INT ragl::mouse::GetCoord( CHAR a )
+INT mouse::GetCoord( CHAR a )
 {
   switch (a)
   {
@@ -78,7 +78,7 @@ INT ragl::mouse::GetCoord( CHAR a )
   }
 } 
 
-INT ragl::mouse::GetDeltaCoord( CHAR a )
+INT mouse::GetDeltaCoord( CHAR a )
 {
   switch (a)
   {
@@ -99,12 +99,12 @@ INT ragl::mouse::GetDeltaCoord( CHAR a )
 #define GET_JOYSTICK_AXIS(A) \
           (2.0 * (ji.dw##A##pos - jc.w##A##min) / (jc.w##A##max - jc.w##A##min) - 1)
 
-ragl::joystick::joystick( VOID )
+joystick::joystick( VOID )
 {
 
 }
 
-VOID ragl::joystick::Response( VOID )
+VOID joystick::Response( VOID )
 {
   /*** Joystick handle ***/
   if (joyGetNumDevs() > 0)

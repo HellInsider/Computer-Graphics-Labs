@@ -1,6 +1,6 @@
 #include "TIMER.H"
 
-ragl::timer::timer( VOID ) : PauseTime(0), FrameCounter(0), IsPause(FALSE), FPS(50)
+timer::timer( VOID ) : PauseTime(0), FrameCounter(0), IsPause(FALSE), FPS(50)
 {
   LARGE_INTEGER t;
 
@@ -10,32 +10,32 @@ ragl::timer::timer( VOID ) : PauseTime(0), FrameCounter(0), IsPause(FALSE), FPS(
   QueryPerformanceCounter(&t);
   StartTime = OldTime = OldTimeFPS = t.QuadPart;
 } 
-UINT64 ragl::timer::GetTimePerSec( VOID )
+UINT64 timer::GetTimePerSec( VOID )
 {
  return TimePerSec;
 }
 
-DBL ragl::timer::GetTime( VOID )
+DBL timer::GetTime( VOID )
 {
  return Time;
 }
 
-DBL ragl::timer::GetGlobalTime( VOID )
+DBL timer::GetGlobalTime( VOID )
 {
   return GlobalTime;
 } 
 
-DBL ragl::timer::GetDeltaTime( VOID )
+DBL timer::GetDeltaTime( VOID )
 {
   return DeltaTime;
 } 
 
-DBL ragl::timer::GetGlobalDeltaTime( VOID )
+DBL timer::GetGlobalDeltaTime( VOID )
 {
   return GlobalDeltaTime;
 } 
 
-VOID ragl::timer::Response( VOID )
+VOID timer::Response( VOID )
 {
   LARGE_INTEGER t;
 
@@ -66,7 +66,7 @@ VOID ragl::timer::Response( VOID )
   OldTime = t.QuadPart;
 } 
 
-VOID ragl::timer::SetPause( VOID )
+VOID timer::SetPause( VOID )
 {
   IsPause = !IsPause;
 }

@@ -1,10 +1,10 @@
 #include "WIN.H"
 
-INT ragl::win::WindowCounter = 0;
-INT ragl::win::RefreshTimerID = 23;
-INT ragl::win::InitTimerID = 9;
+INT win::WindowCounter = 0;
+INT win::RefreshTimerID = 23;
+INT win::InitTimerID = 9;
 
-LRESULT CALLBACK ragl::win::WindowFunc( HWND hWnd, UINT Msg,
+LRESULT CALLBACK win::WindowFunc( HWND hWnd, UINT Msg,
                                         WPARAM wParam, LPARAM lParam )
 {
   win *Win;
@@ -20,9 +20,9 @@ LRESULT CALLBACK ragl::win::WindowFunc( HWND hWnd, UINT Msg,
     return 0;
   case WM_CREATE:
     /* Attach 'this' pointer to window class to window */
-    SetWindowLong(hWnd, 0, (DWORD)((CREATESTRUCT *)lParam)->lpCreateParams);
+    SetWindowLongPtr(hWnd, 0, (LONG_PTR)((CREATESTRUCT *)lParam)->lpCreateParams);
   default:
-    Win = (win *)GetWindowLong(hWnd, 0);
+    Win = (win *)GetWindowLongPtr(hWnd, 0);
     if (Win != NULL)
       switch (Msg)
       {
@@ -54,7 +54,7 @@ LRESULT CALLBACK ragl::win::WindowFunc( HWND hWnd, UINT Msg,
   }
 } 
 
-ragl::win::win( HINSTANCE hInst ) : hInstance(hInst), IsFullScreen(FALSE), MouseWheel(0)
+win::win( HINSTANCE hInst ) : hInstance(hInst), IsFullScreen(FALSE), MouseWheel(0)
 {
   WNDCLASS wc;
 
@@ -83,19 +83,19 @@ ragl::win::win( HINSTANCE hInst ) : hInstance(hInst), IsFullScreen(FALSE), Mouse
 
   hWnd = CreateWindow("My WindowClass", "Feels bad man",
     WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-    -8, -31, 1920, 1080,
+    CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
     NULL, NULL, hInstance, (VOID *)this);
 } 
 
 
-ragl::win::~win( VOID )
+win::~win( VOID )
 {
   if (hWnd != NULL)
     DestroyWindow(hWnd);
   WindowCounter--;
 } 
 
-VOID ragl::win::Run( VOID )
+VOID win::Run( VOID )
 {
   MSG msg;
 
@@ -122,7 +122,7 @@ VOID ragl::win::Run( VOID )
   //return msg.wParam;
 } 
 
-VOID ragl::win::FlipFullScreen( VOID )
+VOID win::FlipFullScreen( VOID )
 {
   if (IsFullScreen)
   {
@@ -160,14 +160,14 @@ VOID ragl::win::FlipFullScreen( VOID )
   IsFullScreen = !IsFullScreen;
 } 
 
-BOOL ragl::win::OnCreate( CREATESTRUCT *CS )
+BOOL win::OnCreate( CREATESTRUCT *CS )
 {
       
   SetTimer(hWnd, InitTimerID, 10, NULL);
   return TRUE;
 } 
 
-VOID ragl::win::OnDestroy( VOID )
+VOID win::OnDestroy( VOID )
 {
   if (IsInit)
   {
@@ -181,7 +181,7 @@ VOID ragl::win::OnDestroy( VOID )
   hWnd = NULL;
 } 
 
-VOID ragl::win::OnSize( UINT State, INT W, INT H )
+VOID win::OnSize( UINT State, INT W, INT H )
 {
   this->W = W;
   this->H = H;
@@ -189,14 +189,14 @@ VOID ragl::win::OnSize( UINT State, INT W, INT H )
     Resize();
 } 
 
-BOOL ragl::win::OnEraseBkgnd( HDC hDC )
+BOOL win::OnEraseBkgnd( HDC hDC )
 {
   if (IsInit)
     Erase(hDC);
   return FALSE;
 } 
 
-VOID ragl::win::OnPaint( VOID )
+VOID win::OnPaint( VOID )
 {
   HDC hDC;
   PAINTSTRUCT ps;
@@ -207,14 +207,14 @@ VOID ragl::win::OnPaint( VOID )
   EndPaint(hWnd, &ps); 
 } 
 
-VOID ragl::win::OnActivate( UINT Reason, HWND hWndActDeact, BOOL IsMinimized )
+VOID win::OnActivate( UINT Reason, HWND hWndActDeact, BOOL IsMinimized )
 {
   IsActive = Reason == WA_CLICKACTIVE || Reason == WA_ACTIVE;
   if (IsInit)
     Activate();
 } 
 
-VOID ragl::win::OnTimer( INT Id ) 
+VOID win::OnTimer( INT Id ) 
 {
   if (!IsInit)
   {
@@ -229,46 +229,46 @@ VOID ragl::win::OnTimer( INT Id )
     Timer();
 } 
 
-VOID ragl::win::OnMouseWheel( INT Z )
+VOID win::OnMouseWheel( INT Z )
 {
   MouseWheel += Z;
 } 
     
-VOID ragl::win::OnClose( VOID )
+VOID win::OnClose( VOID )
 {
     
 }
 
  
 
-VOID ragl::win::Init( VOID )
+VOID win::Init( VOID )
 {
 } 
 
-VOID ragl::win::Close( VOID )
+VOID win::Close( VOID )
 {
 } 
 
-VOID ragl::win::Resize( VOID )
+VOID win::Resize( VOID )
 {
 } 
 
-VOID ragl::win::Erase( HDC hDC )
+VOID win::Erase( HDC hDC )
 {
 } 
 
-VOID ragl::win::Paint( HDC hDC )
+VOID win::Paint( HDC hDC )
 {
 } 
 
-VOID ragl::win::Timer( VOID )
+VOID win::Timer( VOID )
 {
 } 
 
-VOID ragl::win::Activate( VOID )
+VOID win::Activate( VOID )
 {
 } 
 
-VOID ragl::win::Idle( VOID )
+VOID win::Idle( VOID )
 {
 } 

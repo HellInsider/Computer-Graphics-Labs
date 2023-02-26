@@ -3,39 +3,21 @@
 #include "u_tarakan.h"
 #include "u_ground.h"
 #include "u_house.h"
-#include "u_sky.h"
-#include "U_BUBBLE.H"
-#include "U_RT_SCENE.H"
 #include "anim.h"
 
-ragl::control::control( ragl::anim *Ani, UINT preset ) : unit()
+control::control( anim *Ani, UINT preset ) : unit()
 {
   srand(Ani->GetGlobalTime());
   if (preset == 0)
   {
-    Ani->Cam.SetView(ragl::vec(30, 1.8, 15), ragl::vec(3, 0.8, 3));
+    Ani->Cam.SetView(vec(30, 1.8, 15), vec(3, 0.8, 3));
     *Ani << new ground(Ani);
-    //  *Ani << new sky(Ani);
- //   *Ani << new house(Ani, vec(0), "Building_A08.g3dm");
     *Ani << new house(Ani, vec(0), "Building_A08.g3dm");
-    *Ani << new bubble(Ani, vec(3, 0.5, 3));
-  }
-  else
-  {
-    Ani->Cam.SetView(ragl::vec(5, 3, 8), ragl::vec(3.0, 2.5, 4.3));
-    *Ani << new rt_scene(Ani);
- //   for (int i = 0; i < 10000; i++)
-    *Ani << new bubble(Ani, vec(3.0, 2.5, 4.3));
-    *Ani << new bubble(Ani, vec(0.0, 2.5, 5.0));
-    *Ani << new bubble(Ani, vec(4.0, 4.5, 1.3));
-    *Ani << new bubble(Ani, vec(5.0, 2.5, 2.3));
   }
 } 
 
-VOID ragl::control::Response( ragl::anim *Ani )
+VOID control::Response( anim *Ani )
 {
-  ///prim p(topology::plane(vec(-50, 0, -50), vec(100, 0, 0), vec(0, 0, 100), 4, 4));
-  ///p.Draw(matr());
   static INT jumpCounter = 0;
   static  FLT TimeShift = 0;
   vec L = Ani->Cam.GetLoc(), D = !(Ani->Cam.GetAt() - L), R = Ani->Cam.GetRight();
@@ -46,11 +28,6 @@ VOID ragl::control::Response( ragl::anim *Ani )
     Ani->FlipFullScreen();
   else if (Ani->KeysClick['P'])
     Ani->SetPause();
-  else if (Ani->KeysClick['V'])
-  {
-    vigluni *v = new vigluni(Ani, vec(rand() / 500 % 5, 0, 2));
-    *Ani << v;
-  }
   else if (Ani->KeysClick['T'])
     *Ani << new tarakan(Ani, vec2(rand() / 137 % 20, rand() / 137 % 20));
 
@@ -78,9 +55,7 @@ VOID ragl::control::Response( ragl::anim *Ani )
       TimeShift = Ani->GetTime();
       jumpCounter--;
     }
-    //L = vec(L.GetX(), 1.8 - pow(((FLT)(jumpCounter - 4) / 4), 2), L.GetZ());
   }
   /* Move camera */
-  ///3 * (FLT)Ani->GetDeltaCoord('Z') / 500
     Ani->Cam.SetViewDir(L, D);
 } 

@@ -1,7 +1,7 @@
 #include "anim.h"
 
 
-ragl::material::material(const std::string& NewName,
+material::material(const std::string& NewName,
   const color3& NewKa/* = color3(0.1, 0.3, 0.2)*/, const color3& NewKd/* = color3(0.9)*/, const color3& NewKs/* = color3(0.2)*/,
   FLT NewPh/* = 30*/, FLT NewTrans/* = 0*/,
   shader* NewShd/* = NULL*/, texture* NewTex0/* = NULL*/, texture* NewTex1/* = NULL*/) :
@@ -14,7 +14,7 @@ ragl::material::material(const std::string& NewName,
   MaterialData.IsTex0 = Tex[0] != NULL;
   MaterialData.IsTex1 = Tex[1] != NULL;
 
-  ragl::render* rnd = anim::GetAnim();
+  render* rnd = anim::GetAnim();
 
   D3D11_BUFFER_DESC bd;
   ZeroMemory(&bd, sizeof(bd));
@@ -35,9 +35,9 @@ ragl::material::material(const std::string& NewName,
 
 } 
 
-VOID ragl::material::Apply( VOID )
+VOID material::Apply( VOID )
 {
-  ragl::render *rnd = anim::GetAnim();
+  render *rnd = anim::GetAnim();
 
   // Apply shader
   shader *shd = Shd;
@@ -68,7 +68,7 @@ VOID ragl::material::Apply( VOID )
 
  }
 
-HRESULT ragl::shader::CompileShaderFromFile(const CHAR* szFileName, LPCSTR szEntryPoint, LPCSTR szShaderModel, ID3DBlob** ppBlobOut, const D3D_SHADER_MACRO* defines)
+HRESULT shader::CompileShaderFromFile(const CHAR* szFileName, LPCSTR szEntryPoint, LPCSTR szShaderModel, ID3DBlob** ppBlobOut, const D3D_SHADER_MACRO* defines)
 {
   HRESULT hr = S_OK;
 
@@ -103,9 +103,9 @@ HRESULT ragl::shader::CompileShaderFromFile(const CHAR* szFileName, LPCSTR szEnt
 }
 
 
-ragl::shader::shader(const std::string& FileNamePrefix, const D3D_SHADER_MACRO* defines) : Name(FileNamePrefix)
+shader::shader(const std::string& FileNamePrefix, const D3D_SHADER_MACRO* defines) : Name(FileNamePrefix)
 {
-  ragl::render* rnd = anim::GetAnim();
+  render* rnd = anim::GetAnim();
   // Compile the vertex shader
   ID3DBlob* pVSBlob = nullptr;
   std::string fullName = FileNamePrefix + PostfixVert;
@@ -171,20 +171,20 @@ ragl::shader::shader(const std::string& FileNamePrefix, const D3D_SHADER_MACRO* 
    
 } 
 
-VOID ragl::shader::Apply(VOID)
+VOID shader::Apply(VOID)
 {
   /* Enable shader */
-  ragl::render* rnd = anim::GetAnim();
+  render* rnd = anim::GetAnim();
 
   rnd->GetDriverIterface()->VSSetShader(VertexShader, nullptr, 0);
   rnd->GetDriverIterface()->PSSetShader(PixelShader, nullptr, 0);
 } 
 
 
-ragl::texture::texture(const std::string& NewName, INT NewW, INT NewH, INT BytesPerPixel, BYTE* Pixels) :
+texture::texture(const std::string& NewName, INT NewW, INT NewH, INT BytesPerPixel, BYTE* Pixels) :
   Name(NewName), W(NewW), H(NewH)
 {
-  ragl::render* rnd = anim::GetAnim();
+  render* rnd = anim::GetAnim();
   HRESULT hr;
   // format selection
   DXGI_FORMAT format;
@@ -263,9 +263,9 @@ ragl::texture::texture(const std::string& NewName, INT NewW, INT NewH, INT Bytes
 
 } 
 
-VOID ragl::texture::Apply(UINT slot)
+VOID texture::Apply(UINT slot)
 {
-  ragl::render* rnd = anim::GetAnim();
+  render* rnd = anim::GetAnim();
   rnd->GetDriverIterface()->PSSetShaderResources(slot, 1, &TextureSRV);
   rnd->GetDriverIterface()->PSSetSamplers(slot, 1, &Sampler);
 } 

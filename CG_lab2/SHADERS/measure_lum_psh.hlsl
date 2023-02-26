@@ -6,6 +6,17 @@ struct PS_INPUT
 
 Texture2D Texture0 : register(t2);
 
+#if defined(LUM_STAGE_FINAL)
+Texture2D OldFrameLum : register(t4);
+cbuffer CommonConstBuf : register(b0)
+{
+  matrix MatrView;
+  matrix MatrProj;
+  float3 CamLoc;
+  float DeltaTime;
+};
+#endif
+
 cbuffer ScreenSpaceConstBuf : register(b3)
 {
   float sxInv; // 1.0 / sx
@@ -63,9 +74,12 @@ float4 main(PS_INPUT input) : SV_Target
 
   lum /= float(sx * sy);
   lum = exp(lum) - 1.0;
-  float key = 1.03 - (2.0 / (2.0 + log10(lum + 1.0)));
-  float expo = key / lum * 3.0;
-  rez.x = expo;
+
+  float old = OldFrameLum.Load(int3(0, 0, 0)).x;
+  float s = 2.0;
+  float adopted = old + (lum - old) * (1.0 - exp(-DeltaTime / s));
+
+  rez.x = adopted;
 #endif
   return rez;
 }

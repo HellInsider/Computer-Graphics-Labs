@@ -83,41 +83,17 @@
     <ClInclude Include="LIST_UNITS.H">
       <Filter>Units</Filter>
     </ClInclude>
-    <ClInclude Include="U_VIGLUNI.H">
-      <Filter>Units</Filter>
-    </ClInclude>
-    <ClInclude Include="U_EDGE.H">
-      <Filter>Units\Nature</Filter>
-    </ClInclude>
     <ClInclude Include="U_GROUND.H">
       <Filter>Units\Nature</Filter>
     </ClInclude>
-    <ClInclude Include="U_SARAY.H">
-      <Filter>Units\Buildings</Filter>
-    </ClInclude>
     <ClInclude Include="U_HOUSE.H">
       <Filter>Units\Buildings</Filter>
-    </ClInclude>
-    <ClInclude Include="U_SMALL_HOUSE.H">
-      <Filter>Units\Buildings</Filter>
-    </ClInclude>
-    <ClInclude Include="U_RIVER.H">
-      <Filter>Units\Nature</Filter>
-    </ClInclude>
-    <ClInclude Include="U_MY_TARAKAN.H">
-      <Filter>Units\Tarakan</Filter>
     </ClInclude>
     <ClInclude Include="U_TARAKAN.H">
       <Filter>Units\Tarakan</Filter>
     </ClInclude>
     <ClInclude Include="U_SKY.H">
       <Filter>Units\Nature</Filter>
-    </ClInclude>
-    <ClInclude Include="U_BUBBLE.H">
-      <Filter>Units</Filter>
-    </ClInclude>
-    <ClInclude Include="U_RT_SCENE.H">
-      <Filter>Units</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -144,41 +120,17 @@
     <ClCompile Include="U_CONTROL.CPP">
       <Filter>Units</Filter>
     </ClCompile>
-    <ClCompile Include="U_VIGLUNI.CPP">
-      <Filter>Units</Filter>
-    </ClCompile>
     <ClCompile Include="U_HOUSE.CPP">
       <Filter>Units\Buildings</Filter>
     </ClCompile>
-    <ClCompile Include="U_SARAY.CPP">
-      <Filter>Units\Buildings</Filter>
-    </ClCompile>
-    <ClCompile Include="U_SMALL_HOUSE.CPP">
-      <Filter>Units\Buildings</Filter>
-    </ClCompile>
-    <ClCompile Include="U_EDGE.CPP">
-      <Filter>Units\Nature</Filter>
-    </ClCompile>
     <ClCompile Include="U_GROUND.CPP">
-      <Filter>Units\Nature</Filter>
-    </ClCompile>
-    <ClCompile Include="U_RIVER.CPP">
       <Filter>Units\Nature</Filter>
     </ClCompile>
     <ClCompile Include="U_TARAKAN.CPP">
       <Filter>Units\Tarakan</Filter>
     </ClCompile>
-    <ClCompile Include="U_MY_TARAKAN.CPP">
-      <Filter>Units\Tarakan</Filter>
-    </ClCompile>
     <ClCompile Include="U_SKY.CPP">
       <Filter>Units\Nature</Filter>
-    </ClCompile>
-    <ClCompile Include="U_BUBBLE.CPP">
-      <Filter>Units</Filter>
-    </ClCompile>
-    <ClCompile Include="U_RT_SCENE.CPP">
-      <Filter>Units</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

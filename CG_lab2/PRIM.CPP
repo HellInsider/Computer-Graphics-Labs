@@ -5,7 +5,7 @@
 /* Prim class methods */
 /*____________________*/
 
-ragl::prim::prim( const topology::base &T ) :
+prim::prim( const topology::base &T ) :
   Type(T.Type), Transform(matr()), NumOfElements(T.I.size()), Mtl(NULL), Id(0)
 {
   /* Collect min-max information */
@@ -60,16 +60,16 @@ ragl::prim::prim( const topology::base &T ) :
   if (FAILED(hr))
     MessageBox(NULL, "Failed to create transform constant buf", "ERROR", MB_OK);
 
-} /* End of destructor method */
+}
 
-ragl::prim::~prim(VOID)
+prim::~prim(VOID)
 {
   if (VertexBuffer) VertexBuffer->Release();
   if (IndexBuffer) IndexBuffer->Release();
   if (TransformConstBuf) TransformConstBuf->Release();
 }
 
-VOID ragl::prim::Draw(const matr& World, BOOL ExplicitShader, BOOL MeasureTime)
+VOID prim::Draw(const matr& World, BOOL ExplicitShader, BOOL MeasureTime)
 {
     render* rnd = anim::GetAnim();
     transform tr;
@@ -108,30 +108,18 @@ VOID ragl::prim::Draw(const matr& World, BOOL ExplicitShader, BOOL MeasureTime)
 /* Primitives class methods */
 /*__________________________*/
 
-ragl::primitives::primitives( VOID ) : Transform(matr())
+primitives::primitives( VOID ) : Transform(matr())
 {
-/*  D3D11_BUFFER_DESC bd;
-  ZeroMemory(&bd, sizeof(bd));
-  bd.Usage = D3D11_USAGE_DEFAULT;
-  bd.ByteWidth = sizeof(matr);
-  bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-  bd.CPUAccessFlags = 0;
-  render* rnd = anim::GetAnim();
-  HRESULT hr = rnd->GetDriver()->CreateBuffer(&bd, nullptr, &TransformConstBuf);
-  if (FAILED(hr))
-    MessageBox(NULL, "Failed to create transform constant buf", "ERROR", MB_OK);*/
-
 } 
 
-ragl::primitives::~primitives( VOID )
+primitives::~primitives( VOID )
 {
   for (int i = 0; i < Prims.size(); i++)
     delete Prims[i];
   Prims.clear();
-  //if (TransformConstBuf) TransformConstBuf->Release();
 } 
 
-VOID ragl::primitives::Draw( const matr &World )
+VOID primitives::Draw( const matr &World )
 {
   INT i;
 
@@ -174,7 +162,7 @@ VOID ragl::primitives::Draw( const matr &World )
   }
 } 
 
-BOOL ragl::primitives::Load( const std::string &FileName, const matr &Transform )
+BOOL primitives::Load( const std::string &FileName, const matr &Transform )
 {
   FILE *F;
   DWORD Sign;
@@ -242,7 +230,7 @@ BOOL ragl::primitives::Load( const std::string &FileName, const matr &Transform 
     /* Shader string */
     CHAR ShaderStr[300];
     INT Shader;                        /* Texture references */
-  }; /* End of 'STORE_MATERIAL' struct */
+  };
 
   std::vector<material *> mtls;
   std::vector<STORE_MATERIAL> store_mtls;
@@ -290,33 +278,32 @@ BOOL ragl::primitives::Load( const std::string &FileName, const matr &Transform 
     if (prims_mtl[i] != -1)
       Prims[i]->Mtl = mtls[prims_mtl[i]];
   return TRUE;   
-} /* End of 'Load' method */
+}
 
 /**********************/
 /* Base class methods */
 /*____________________*/
 
-/* Class default constructor method */
-ragl::topology::base::base( VOID )
+topology::base::base( VOID )
 {
 } 
 
-ragl::topology::base::base( prim::type NewType,
+topology::base::base( prim::type NewType,
       const std::vector<prim::VERTEX> &NewV,
       const std::vector<INT> &NewI ) : Type(NewType), V(NewV), I(NewI)
 {
 } 
 
-ragl::topology::trimesh::trimesh( VOID )
+topology::trimesh::trimesh( VOID )
 {
 } 
 
-ragl::topology::trimesh::trimesh( const std::vector<prim::VERTEX> &NewV,
-         const std::vector<INT> &NewI ) : ragl::topology::base(ragl::prim::TRIMESH, NewV, NewI)
+topology::trimesh::trimesh( const std::vector<prim::VERTEX> &NewV,
+         const std::vector<INT> &NewI ) : topology::base(prim::TRIMESH, NewV, NewI)
 {
 } 
 
-ragl::topology::trimesh& ragl::topology::trimesh::EvalNormals( VOID )
+topology::trimesh& topology::trimesh::EvalNormals( VOID )
 {
   /* Set to zero all normals */
   for (auto &v : V)
@@ -342,7 +329,7 @@ ragl::topology::trimesh& ragl::topology::trimesh::EvalNormals( VOID )
 
 } 
 
-ragl::topology::grid::grid( INT NewW, INT NewH ) : W(NewW), H(NewH), base(prim::STRIP)
+topology::grid::grid( INT NewW, INT NewH ) : W(NewW), H(NewH), base(prim::STRIP)
 {
   /* Setup vertices */
   V.resize(W * H, prim::VERTEX(vec(0)));
@@ -365,7 +352,7 @@ ragl::topology::grid::grid( INT NewW, INT NewH ) : W(NewW), H(NewH), base(prim::
   }
 } 
 
-ragl::topology::grid & ragl::topology::grid::EvalNormals( VOID )
+topology::grid & topology::grid::EvalNormals( VOID )
 {
   /* Set to zero all normals */
   for (auto &v : V)
@@ -402,7 +389,7 @@ ragl::topology::grid & ragl::topology::grid::EvalNormals( VOID )
   return *this;
 } 
 
-ragl::topology::sphere::sphere( const vec &Center, FLT R, INT NewW, INT NewH ) : grid(NewW, NewH)
+topology::sphere::sphere( const vec &Center, FLT R, INT NewW, INT NewH ) : grid(NewW, NewH)
 {
   /* Setup vertices */
   auto p = V.begin();
@@ -414,9 +401,9 @@ ragl::topology::sphere::sphere( const vec &Center, FLT R, INT NewW, INT NewH ) :
       p->N = vec(sin(theta) * sin(phi), cos(theta), sin(theta) * cos(phi));
       p->P = Center + p->N * R;
     }
-} /* End of constructor method */
+}
 
-ragl::topology::box::box( const vec& p1, const vec& p2 )
+topology::box::box( const vec& p1, const vec& p2 )
 {
   Type = prim::TRIMESH;
   V.resize(24, prim::VERTEX(vec(0)));

@@ -4,50 +4,45 @@
 #include "DEF.H"
 #include "MTH.H"
 
-/* Working namespace of AK5a */
-namespace ragl
+/* Timer class */
+class timer
 {
-  /* Timer class */
-  class timer
-  {
-  protected:
-      /* Timer data */
-  DBL
-    GlobalTime, GlobalDeltaTime, /* Global time and interframe interval */
-    Time, DeltaTime,             /* Time with pause and interframe interval */
-    FPS;                         /* Frames per seond value */
-  BOOL
-    IsPause;                     /* Pause flag */
-  private:
-    /* Timer local data */
-    UINT64
-      StartTime,  /* Start program time */
-      OldTime,    /* Time from program start to previous frame */
-      OldTimeFPS, /* Old time FPS measurement */
-      PauseTime,  /* Time during pause period */
-      TimePerSec, /* Timer resolution */
-      FrameCounter; /* Frames counter */
-  public:
- 
-    timer( VOID );
+protected:
+    /* Timer data */
+DBL
+  GlobalTime, GlobalDeltaTime, /* Global time and interframe interval */
+  Time, DeltaTime,             /* Time with pause and interframe interval */
+  FPS;                         /* Frames per seond value */
+BOOL
+  IsPause;                     /* Pause flag */
+private:
+  /* Timer local data */
+  UINT64
+    StartTime,  /* Start program time */
+    OldTime,    /* Time from program start to previous frame */
+    OldTimeFPS, /* Old time FPS measurement */
+    PauseTime,  /* Time during pause period */
+    TimePerSec, /* Timer resolution */
+    FrameCounter; /* Frames counter */
+public:
 
-    UINT64 GetTimePerSec( VOID );
+  timer( VOID );
 
-    DBL GetTime( VOID );
+  UINT64 GetTimePerSec( VOID );
 
-    DBL GetGlobalTime( VOID );
+  DBL GetTime( VOID );
 
-    DBL GetDeltaTime( VOID );
+  DBL GetGlobalTime( VOID );
 
-    DBL GetGlobalDeltaTime( VOID );
+  DBL GetDeltaTime( VOID );
 
-    VOID Response( VOID );
+  DBL GetGlobalDeltaTime( VOID );
 
-    VOID SetPause( VOID );
+  VOID Response( VOID );
 
-  };
+  VOID SetPause( VOID );
 
-}
+};
 
 #endif // __TIMER_H_
 

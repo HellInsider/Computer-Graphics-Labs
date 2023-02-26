@@ -3,33 +3,28 @@
 
 #include "DEF.H"
 
-/* Working namespace of AK5a */
-namespace ragl
+/* Forward declarations */
+class anim;
+
+/* Unit base class */
+class unit
 {
-  /* Forward declarations */
-  class anim;
-
-  /* Unit base class */
-  class unit
+public:
+  unit( VOID )
   {
-  public:
-    unit( VOID )
-    {
-    }
+  }
 
-    virtual ~unit( VOID )
-    {
-    }
+  virtual ~unit( VOID )
+  {
+  }
 
-    virtual VOID Response( anim *Ani )
-    {
-    }
+  virtual VOID Response( anim *Ani )
+  {
+  }
 
-    virtual VOID Render( anim *Ani )
-    {
-    }
-  }; 
-
-} 
+  virtual VOID Render( anim *Ani )
+  {
+  }
+}; 
 
 #endif // __UNIT_H_

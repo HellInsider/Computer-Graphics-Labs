@@ -16,16 +16,13 @@
 /* Math support */
 #include "mth.h"
 
-/* Working namespace of AK5a */
-namespace ragl
-{
-  typedef mth::vec<FLT> vec;
-  typedef mth::vec2<FLT> vec2;
-  typedef mth::matr<FLT> matr;
-  typedef mth::raw_matr<FLT> raw_matr;
-  typedef mth::color<FLT> color;
-  typedef mth::camera<FLT> camera;
-}
+typedef mth::vec<FLT> vec;
+typedef mth::vec2<FLT> vec2;
+typedef mth::matr<FLT> matr;
+typedef mth::raw_matr<FLT> raw_matr;
+typedef mth::color<FLT> color;
+typedef mth::camera<FLT> camera;
+
 
 /* Memory leaks detection: */
 /* Debug memory allocation support */ 

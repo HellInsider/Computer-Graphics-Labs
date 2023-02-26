@@ -1,14 +1,14 @@
 #include "RENDER.H"
 #include "ANIM.H"
 
-const D3D_SHADER_MACRO ragl::render::measure_luminance_system::SHADER_CONSTS[][2] =
+const D3D_SHADER_MACRO render::measure_luminance_system::SHADER_CONSTS[][2] =
 {
   {"LUM_STAGE_EVAL_LOGLUM", "1", nullptr, nullptr},
   {"LUM_STAGE_DOWNSAMPLE", "1", nullptr, nullptr},
   {"LUM_STAGE_FINAL", "1", nullptr, nullptr}
 };
 
-ragl::render::measure_luminance_system::measure_luminance_system(render* Rnd) :
+render::measure_luminance_system::measure_luminance_system(render* Rnd) :
   ShdEvalLogLum("shaders\\measure_lum", SHADER_CONSTS[0]),
   ShdDownsample("shaders\\measure_lum", SHADER_CONSTS[1]),
   ShdFinal("shaders\\measure_lum", SHADER_CONSTS[2]),
@@ -37,7 +37,7 @@ ragl::render::measure_luminance_system::measure_luminance_system(render* Rnd) :
   descSRV.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
   descSRV.Texture2D.MostDetailedMip = 0;
   descSRV.Texture2D.MipLevels = 1;
-  for (int i = 0; i <= LUM_RESULT; i++)
+  for (int i = 0; i <= LUM_OLD_FRAME; i++)
   {
     hr = Rnd->Driver->CreateTexture2D(&descRTtex, nullptr, &LuminanceTex[i]);
     if (FAILED(hr))
@@ -48,7 +48,7 @@ ragl::render::measure_luminance_system::measure_luminance_system(render* Rnd) :
     hr = Rnd->Driver->CreateShaderResourceView(LuminanceTex[i], &descSRV, &LuminanceSRV[i]);
     if (FAILED(hr))
       MessageBox(NULL, "Failed to Create LuminanceSRV", "ERROR", MB_OK);
-    if (i == LUM_RESULT - 1)
+    if (i >= LUM_RESULT - 1)
     {
       descRTtex.Width = descRTtex.Height = 1;
       descRTtex.Format = descRT.Format = descSRV.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -72,9 +72,9 @@ ragl::render::measure_luminance_system::measure_luminance_system(render* Rnd) :
 
 }
 
-ragl::render::measure_luminance_system::~measure_luminance_system(VOID)
+render::measure_luminance_system::~measure_luminance_system(VOID)
 {
-  for (int i = 0; i <= LUM_RESULT; i++)
+  for (int i = 0; i <= LUM_OLD_FRAME; i++)
   {
     if (LuminanceSRV[i])
       LuminanceSRV[i]->Release();
@@ -87,7 +87,7 @@ ragl::render::measure_luminance_system::~measure_luminance_system(VOID)
     ScreenSpaceConstBuf->Release();
 }
 
-VOID ragl::render::measure_luminance_system::Draw(render* Rnd, ID3D11ShaderResourceView *src)
+VOID render::measure_luminance_system::Draw(render* Rnd, ID3D11ShaderResourceView* src)
 {
   screenspace_cb_data d;
   d.sx = Rnd->SX;
@@ -96,6 +96,7 @@ VOID ragl::render::measure_luminance_system::Draw(render* Rnd, ID3D11ShaderResou
   d.syInv = 1.0 / d.sy;
 
 
+  Rnd->Annotation->BeginEvent(L"Downsample");
   for (int i = 0; i <= LUM_RESULT; i++)
   {
     Rnd->DriverIterface->OMSetRenderTargets(1, &LuminanceRT[i], nullptr);
@@ -107,7 +108,10 @@ VOID ragl::render::measure_luminance_system::Draw(render* Rnd, ID3D11ShaderResou
         d.sy /= 4;
       }
       if (i == LUM_RESULT)
+      {
         ShdFinal.Apply();
+        Rnd->DriverIterface->PSSetShaderResources(TEXTURE_CONSTANTS_SLOT_2, 1, &LuminanceSRV[LUM_OLD_FRAME]);
+      }
       else
         ShdDownsample.Apply();
       Rnd->DriverIterface->PSSetShaderResources(TEXTURE_SCREENSPACE_SLOT, 1, &LuminanceSRV[i - 1]);
@@ -125,11 +129,13 @@ VOID ragl::render::measure_luminance_system::Draw(render* Rnd, ID3D11ShaderResou
 
     quad.Draw(matr(), TRUE);
   }
+  Rnd->DriverIterface->CopyResource(LuminanceTex[LUM_OLD_FRAME], LuminanceTex[LUM_RESULT]);
+
+  Rnd->Annotation->EndEvent();
 }
 
-VOID Resize(INT w, INT h);
 
-ragl::render::render(HWND hwnd) : hWnd(hwnd), hDC(GetDC(hWnd)), Cam()
+render::render(HWND hwnd) : hWnd(hwnd), hDC(GetDC(hWnd)), Cam()
 {
 
   HRESULT hr = S_OK;
@@ -261,96 +267,7 @@ ragl::render::render(HWND hwnd) : hWnd(hwnd), hDC(GetDC(hWnd)), Cam()
   if (FAILED(hr))
     MessageBox(NULL, "Failed to init dx", "ERROR", MB_OK);
 
-  // Create a render target view
-  ID3D11Texture2D* pBackBuffer = nullptr;
-  hr = SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&pBackBuffer));
-  if (FAILED(hr))
-    MessageBox(NULL, "Failed to init backbuf", "ERROR", MB_OK);
-
-  hr = Driver->CreateRenderTargetView(pBackBuffer, nullptr, &RenderTargetView);
-  if (FAILED(hr))
-    MessageBox(NULL, "Failed to CreateRenderTargetView", "ERROR", MB_OK);
-
-  pBackBuffer->Release();
-
-  D3D11_TEXTURE2D_DESC textureDesc;
-  ZeroMemory(&textureDesc, sizeof(textureDesc));
-  textureDesc.Width = width;
-  textureDesc.Height = height;
-  textureDesc.MipLevels = 1;
-  textureDesc.ArraySize = 1;
-  textureDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
-  textureDesc.SampleDesc.Count = 1;
-  textureDesc.Usage = D3D11_USAGE_DEFAULT;
-  textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
-  textureDesc.CPUAccessFlags = 0;
-  textureDesc.MiscFlags = 0;
-
-  hr = Driver->CreateTexture2D(&textureDesc, nullptr, &ColorPassTex);
-  if (FAILED(hr))
-  {
-    MessageBox(NULL, "Failed to create ColorPassTex", "ERROR", MB_OK);
-    return;
-  }
-
-
-  D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
-  shaderResourceViewDesc.Format = textureDesc.Format;
-  shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-  shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
-  shaderResourceViewDesc.Texture2D.MipLevels = 1;
-
-  Driver->CreateShaderResourceView(ColorPassTex, &shaderResourceViewDesc, &ColorPassShadResView);
-  if (FAILED(hr))
-  {
-    ColorPassTex->Release();
-    MessageBox(NULL, "Failed to create ColorPassShadResView", "ERROR", MB_OK);
-    return;
-  }
-  hr = Driver->CreateRenderTargetView(ColorPassTex, nullptr, &ColorPassRTView);
-  if (FAILED(hr))
-    MessageBox(NULL, "Failed to ColorPassRTView", "ERROR", MB_OK);
-
-
-  // Create depth stencil texture
-  D3D11_TEXTURE2D_DESC descDepth;
-  ZeroMemory(&descDepth, sizeof(descDepth));
-  descDepth.Width = width;
-  descDepth.Height = height;
-  descDepth.MipLevels = 1;
-  descDepth.ArraySize = 1;
-  descDepth.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-  descDepth.SampleDesc.Count = 1;
-  descDepth.SampleDesc.Quality = 0;
-  descDepth.Usage = D3D11_USAGE_DEFAULT;
-  descDepth.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-  descDepth.CPUAccessFlags = 0;
-  descDepth.MiscFlags = 0;
-  hr = Driver->CreateTexture2D(&descDepth, nullptr, &DepthStencilTex);
-  if (FAILED(hr))
-    MessageBox(NULL, "Failed to Create DepthStencilTex", "ERROR", MB_OK);
-
-  // Create the depth stencil view
-  D3D11_DEPTH_STENCIL_VIEW_DESC descDSV;
-  ZeroMemory(&descDSV, sizeof(descDSV));
-  descDSV.Format = descDepth.Format;
-  descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-  descDSV.Texture2D.MipSlice = 0;
-  hr = Driver->CreateDepthStencilView(DepthStencilTex, &descDSV, &DepthStencilView);
-  if (FAILED(hr))
-    MessageBox(NULL, "Failed to Create DepthStencilView", "ERROR", MB_OK);
-
-  DriverIterface->OMSetRenderTargets(1, &ColorPassRTView, DepthStencilView);
-
-  // Setup the viewport
-  D3D11_VIEWPORT vp;
-  vp.Width = (FLOAT)width;
-  vp.Height = (FLOAT)height;
-  vp.MinDepth = 0.0f;
-  vp.MaxDepth = 1.0f;
-  vp.TopLeftX = 0;
-  vp.TopLeftY = 0;
-  DriverIterface->RSSetViewports(1, &vp);
+  InitSizeDependentResources();
 
   D3D11_BUFFER_DESC bd;
   ZeroMemory(&bd, sizeof(D3D11_BUFFER_DESC));
@@ -415,31 +332,138 @@ ragl::render::render(HWND hwnd) : hWnd(hwnd), hDC(GetDC(hWnd)), Cam()
   SysMeasureLum = new measure_luminance_system(this);
 }
 
-VOID ragl::render::Resize( INT w, INT h )
+VOID render::InitSizeDependentResources(VOID)
 {
+  // Create a render target view
+  ID3D11Texture2D* pBackBuffer = nullptr;
+  HRESULT hr = SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&pBackBuffer));
+  if (FAILED(hr))
+    MessageBox(NULL, "Failed to init backbuf", "ERROR", MB_OK);
+
+  hr = Driver->CreateRenderTargetView(pBackBuffer, nullptr, &RenderTargetView);
+  if (FAILED(hr))
+    MessageBox(NULL, "Failed to CreateRenderTargetView", "ERROR", MB_OK);
+
+  pBackBuffer->Release();
+
+  D3D11_TEXTURE2D_DESC textureDesc;
+  ZeroMemory(&textureDesc, sizeof(textureDesc));
+  textureDesc.Width = SX;
+  textureDesc.Height = SY;
+  textureDesc.MipLevels = 1;
+  textureDesc.ArraySize = 1;
+  textureDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+  textureDesc.SampleDesc.Count = 1;
+  textureDesc.Usage = D3D11_USAGE_DEFAULT;
+  textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+  textureDesc.CPUAccessFlags = 0;
+  textureDesc.MiscFlags = 0;
+
+  hr = Driver->CreateTexture2D(&textureDesc, nullptr, &ColorPassTex);
+  if (FAILED(hr))
+  {
+    MessageBox(NULL, "Failed to create ColorPassTex", "ERROR", MB_OK);
+    return;
+  }
+
+
+  D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
+  shaderResourceViewDesc.Format = textureDesc.Format;
+  shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+  shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
+  shaderResourceViewDesc.Texture2D.MipLevels = 1;
+
+  Driver->CreateShaderResourceView(ColorPassTex, &shaderResourceViewDesc, &ColorPassShadResView);
+  if (FAILED(hr))
+  {
+    ColorPassTex->Release();
+    MessageBox(NULL, "Failed to create ColorPassShadResView", "ERROR", MB_OK);
+    return;
+  }
+  hr = Driver->CreateRenderTargetView(ColorPassTex, nullptr, &ColorPassRTView);
+  if (FAILED(hr))
+    MessageBox(NULL, "Failed to ColorPassRTView", "ERROR", MB_OK);
+
+
+  // Create depth stencil texture
+  D3D11_TEXTURE2D_DESC descDepth;
+  ZeroMemory(&descDepth, sizeof(descDepth));
+  descDepth.Width = SX;
+  descDepth.Height = SY;
+  descDepth.MipLevels = 1;
+  descDepth.ArraySize = 1;
+  descDepth.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+  descDepth.SampleDesc.Count = 1;
+  descDepth.SampleDesc.Quality = 0;
+  descDepth.Usage = D3D11_USAGE_DEFAULT;
+  descDepth.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+  descDepth.CPUAccessFlags = 0;
+  descDepth.MiscFlags = 0;
+  hr = Driver->CreateTexture2D(&descDepth, nullptr, &DepthStencilTex);
+  if (FAILED(hr))
+    MessageBox(NULL, "Failed to Create DepthStencilTex", "ERROR", MB_OK);
+
+  // Create the depth stencil view
+  D3D11_DEPTH_STENCIL_VIEW_DESC descDSV;
+  ZeroMemory(&descDSV, sizeof(descDSV));
+  descDSV.Format = descDepth.Format;
+  descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+  descDSV.Texture2D.MipSlice = 0;
+  hr = Driver->CreateDepthStencilView(DepthStencilTex, &descDSV, &DepthStencilView);
+  if (FAILED(hr))
+    MessageBox(NULL, "Failed to Create DepthStencilView", "ERROR", MB_OK);
+
+  DriverIterface->OMSetRenderTargets(1, &ColorPassRTView, DepthStencilView);
+
+  // Setup the viewport
   D3D11_VIEWPORT vp;
-  vp.Width = (FLOAT)w;
-  vp.Height = (FLOAT)h;
+  vp.Width = (FLOAT)SX;
+  vp.Height = (FLOAT)SY;
   vp.MinDepth = 0.0f;
   vp.MaxDepth = 1.0f;
   vp.TopLeftX = 0;
   vp.TopLeftY = 0;
   DriverIterface->RSSetViewports(1, &vp);
+}
+
+VOID render::Resize(INT w, INT h)
+{
+  SX = w;
+  SY = h;
+
+  DriverIterface->OMSetRenderTargets(0, nullptr, nullptr);
+  delete SysMeasureLum;
+  if (DepthStencilTex) DepthStencilTex->Release();
+  if (DepthStencilView) DepthStencilView->Release();
+  if (ColorPassRTView) ColorPassRTView->Release();
+  if (ColorPassShadResView) ColorPassShadResView->Release();
+  if (ColorPassTex) ColorPassTex->Release();
+  if (RenderTargetView) RenderTargetView->Release();
+
+  HRESULT hr;
+  hr = SwapChain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
+
+  if (FAILED(hr))
+    MessageBox(NULL, "Failed to resize backbuf", "ERROR", MB_OK);
+
+  InitSizeDependentResources();
+
+  SysMeasureLum = new measure_luminance_system(this);
 
   Cam.Resize(w, h);
-} 
+}
 
-VOID ragl::render::FrameStart( VOID )
+VOID render::FrameStart(VOID)
 {
   float clearColor[] = { 0.01, 0.05, 0.3, 1.0 };
   DriverIterface->ClearRenderTargetView(ColorPassRTView, clearColor);
   DriverIterface->ClearDepthStencilView(DepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
   common_cb_data d;
-  d.MatrView.fromPtr((float *)Cam.GetMatrView());
-  d.MatrProj.fromPtr((float *)Cam.GetMatrProj());
+  d.MatrView.fromPtr((float*)Cam.GetMatrView());
+  d.MatrProj.fromPtr((float*)Cam.GetMatrProj());
   d.CamLoc = Cam.GetLoc();
-  d.Time = anim::GetAnim()->GetTime();
+  d.DeltaTime = anim::GetAnim()->GetDeltaTime();
 
   DriverIterface->UpdateSubresource(CommonConstBuf, 0, nullptr, &d, 0, 0);
   DriverIterface->VSSetConstantBuffers(CONST_BUF_SLOT_COMMON, 1, &CommonConstBuf);
@@ -448,15 +472,19 @@ VOID ragl::render::FrameStart( VOID )
   SetTransparency(FALSE);
 
   DriverIterface->OMSetRenderTargets(1, &ColorPassRTView, DepthStencilView);
-} 
 
-VOID ragl::render::FrameCopy( VOID )
-{
-  //SwapBuffers(hDC);
-} 
+  DriverIterface->QueryInterface(__uuidof(Annotation), reinterpret_cast<void**>(&Annotation));
 
-VOID ragl::render::FrameEnd( VOID )
+  Annotation->BeginEvent(L"ColorPass");
+}
+
+VOID render::FrameCopy(VOID)
 {
+}
+
+VOID render::FrameEnd(VOID)
+{
+  Annotation->EndEvent();
   SysMeasureLum->Draw(this, ColorPassShadResView);
 
   DriverIterface->OMSetRenderTargets(1, &RenderTargetView, nullptr);
@@ -465,17 +493,13 @@ VOID ragl::render::FrameEnd( VOID )
   DriverIterface->PSSetShaderResources(TEXTURE_SCREENSPACE_SLOT, 1, &ColorPassShadResView);
   ScreenQuad->Draw(matr(), TRUE);
 
-  // unbound
-/*  DriverIterface->OMSetRenderTargets(1, nullptr, nullptr);
-  DriverIterface->PSSetShaderResources(0, k_NUM_OF_SLOTS, nullptr);*/
-
   SwapChain->Present(0, 0);
 
   std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
   if (timed)
   {
- //   std::chrono::duration<double, std::milli> time_span = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(t1 - t);
-  //  duration += time_span.count();
+    //   std::chrono::duration<double, std::milli> time_span = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(t1 - t);
+     //  duration += time_span.count();
   }
   timed = true;
   if (FrameNum == 0)
@@ -492,11 +516,11 @@ VOID ragl::render::FrameEnd( VOID )
     FrameNum = 0;
     duration = 0;
   }
-} 
+  Annotation->Release();
+}
 
-ragl::render::~render( VOID )
+render::~render(VOID)
 {
-  /* Delete OpenGL data */
   if (DriverIterface) DriverIterface->ClearState();
 
   delete ShdTonemap;
@@ -519,33 +543,33 @@ ragl::render::~render( VOID )
   if (Driver1) Driver1->Release();
   if (Driver) Driver->Release();
   /* Delete GDI data */
-   ReleaseDC(hWnd, hDC);
-} 
+  ReleaseDC(hWnd, hDC);
+}
 
- ragl::shader * ragl::render::AddShader( const std::string &FileNamePrefix )
+shader* render::AddShader(const std::string& FileNamePrefix)
 {
-  shader *shd;
+  shader* shd;
   if ((shd = Shaders.Find(FileNamePrefix)) != NULL)
     return shd;
   Shaders.Add(shd = new shader(FileNamePrefix));
   return shd;
-} 
+}
 
- ragl::texture * ragl::render::AddTexture( const std::string &Name, INT W, INT H, INT BytesPerPixel, BYTE *Pixels )
+texture* render::AddTexture(const std::string& Name, INT W, INT H, INT BytesPerPixel, BYTE* Pixels)
 {
-  texture *tex;
+  texture* tex;
   if ((tex = Textures.Find(Name)) != NULL)
     return tex;
   Textures.Add(tex = new texture(Name, W, H, BytesPerPixel, Pixels));
   return tex;
-} 
+}
 
- ragl::material * ragl::render::AddMaterial( const std::string &Name,
-                        const color3 &Ka, const color3 &Kd, const color3 &Ks,
-                        FLT Ph, FLT Trans,
-                        shader *Shd, texture *Tex0, texture *Tex1 )
+material* render::AddMaterial(const std::string& Name,
+  const color3& Ka, const color3& Kd, const color3& Ks,
+  FLT Ph, FLT Trans,
+  shader* Shd, texture* Tex0, texture* Tex1)
 {
-  material *mtl;
+  material* mtl;
   if ((mtl = Materials.Find(Name)) != NULL)
   {
     mtl->MaterialData.Ka = Ka;
@@ -560,4 +584,5 @@ ragl::render::~render( VOID )
   }
   Materials.Add(mtl = new material(Name, Ka, Kd, Ks, Ph, Trans, Shd, Tex0, Tex1));
   return mtl;
-} 
+}
+

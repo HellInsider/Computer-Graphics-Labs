@@ -58,17 +58,6 @@ namespace mth
       return *this;
     } 
 
-    //* Operator(type *) method
-    // *   ARGUMENTS: none.
-    // *   RETURNS  :
-    // *     - pointer to matrix
-    // *         matr<Type> *MatrVP;
-    // */
-    //Type * GetPtr( VOID )
-    //{
-    //  return &M[0][0];
-    //} /* End of operator(type *) method */
-
     operator Type *( VOID )
     {
       return &(M[0][0]);
