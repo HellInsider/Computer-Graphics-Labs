@@ -76,7 +76,7 @@ float4 main(PS_INPUT input) : SV_Target
   lum = exp(lum) - 1.0;
 
   float old = OldFrameLum.Load(int3(0, 0, 0)).x;
-  float s = 2.0;
+  float s = 10.0;
   float adopted = old + (lum - old) * (1.0 - exp(-DeltaTime / s));
 
   rez.x = adopted;

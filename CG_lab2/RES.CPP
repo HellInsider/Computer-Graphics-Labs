@@ -53,7 +53,10 @@ VOID material::Apply( VOID )
     MaterialData.IsTex0 = TRUE;
   }
   else
+  {
+    texture::ApplyNull(TEXTURE_MATERIAL_SLOT_0);
     MaterialData.IsTex0 = FALSE;
+  }
 
   if (Tex[1] != NULL)
   {
@@ -61,7 +64,10 @@ VOID material::Apply( VOID )
     MaterialData.IsTex1 = TRUE;
   }
   else
+  {
+    texture::ApplyNull(TEXTURE_MATERIAL_SLOT_1);
     MaterialData.IsTex1 = FALSE;
+  }
 
   rnd->GetDriverIterface()->UpdateSubresource(ConstBuffer, 0, nullptr, &MaterialData, 0, 0);
   rnd->GetDriverIterface()->PSSetConstantBuffers(CONST_BUF_SLOT_MATERIAL, 1, &ConstBuffer);
@@ -180,7 +186,6 @@ VOID shader::Apply(VOID)
   rnd->GetDriverIterface()->PSSetShader(PixelShader, nullptr, 0);
 } 
 
-
 texture::texture(const std::string& NewName, INT NewW, INT NewH, INT BytesPerPixel, BYTE* Pixels) :
   Name(NewName), W(NewW), H(NewH)
 {
@@ -269,4 +274,14 @@ VOID texture::Apply(UINT slot)
   rnd->GetDriverIterface()->PSSetShaderResources(slot, 1, &TextureSRV);
   rnd->GetDriverIterface()->PSSetSamplers(slot, 1, &Sampler);
 } 
+
+VOID texture::ApplyNull(UINT slot)
+{
+  render* rnd = anim::GetAnim();
+  ID3D11ShaderResourceView* ref = nullptr;
+  rnd->GetDriverIterface()->PSSetShaderResources(slot, 1, &ref);
+  rnd->GetDriverIterface()->PSSetSamplers(slot, 1, rnd->GetDefaultLinearSampler());
+
+}
+
 

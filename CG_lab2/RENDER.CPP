@@ -75,14 +75,15 @@ render::measure_luminance_system::measure_luminance_system(render* Rnd) :
 render::measure_luminance_system::~measure_luminance_system(VOID)
 {
   for (int i = 0; i <= LUM_OLD_FRAME; i++)
-  {
     if (LuminanceSRV[i])
       LuminanceSRV[i]->Release();
+  for (int i = 0; i <= LUM_OLD_FRAME; i++)
     if (LuminanceRT[i])
       LuminanceRT[i]->Release();
+  for (int i = 0; i <= LUM_OLD_FRAME; i++)
     if (LuminanceTex[i])
       LuminanceTex[i]->Release();
-  }
+
   if (ScreenSpaceConstBuf)
     ScreenSpaceConstBuf->Release();
 }
@@ -189,6 +190,8 @@ render::render(HWND hwnd) : hWnd(hwnd), hDC(GetDC(hWnd)), Cam()
   if (FAILED(hr))
     MessageBox(NULL, "Failed to create device", "ERROR", MB_OK);
 
+  Driver->QueryInterface(IID_ID3D11Debug, (void**)&debug);//my str
+
   // Obtain DXGI factory from device (since we used nullptr for pAdapter above)
   IDXGIFactory1* dxgiFactory = nullptr;
   {
@@ -210,47 +213,18 @@ render::render(HWND hwnd) : hWnd(hwnd), hDC(GetDC(hWnd)), Cam()
     MessageBox(NULL, "Failed to Obtain DXGI factory", "ERROR", MB_OK);
 
   // Create swap chain
-  IDXGIFactory2* dxgiFactory2 = nullptr;
-  hr = dxgiFactory->QueryInterface(__uuidof(IDXGIFactory2), reinterpret_cast<void**>(&dxgiFactory2));
-  if (dxgiFactory2)
-  {
-    // DirectX 11.1 or later
-    hr = Driver->QueryInterface(__uuidof(ID3D11Device1), reinterpret_cast<void**>(&Driver1));
-    if (SUCCEEDED(hr))
-    {
-      (void)DriverIterface->QueryInterface(__uuidof(ID3D11DeviceContext1), reinterpret_cast<void**>(&DriverIterface1));
-    }
-
-    DXGI_SWAP_CHAIN_DESC1 sd;
-    ZeroMemory(&sd, sizeof(sd));
-    sd.Width = width;
-    sd.Height = height;
-    sd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    sd.SampleDesc.Count = 1;
-    sd.SampleDesc.Quality = 0;
-    sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    sd.BufferCount = 1;
-
-    hr = dxgiFactory2->CreateSwapChainForHwnd(Driver, hWnd, &sd, nullptr, nullptr, &SwapChain1);
-    if (SUCCEEDED(hr))
-    {
-      hr = SwapChain1->QueryInterface(__uuidof(IDXGISwapChain), reinterpret_cast<void**>(&SwapChain));
-    }
-
-    dxgiFactory2->Release();
-  }
-  else
   {
     // DirectX 11.0 systems
     DXGI_SWAP_CHAIN_DESC sd;
     ZeroMemory(&sd, sizeof(sd));
-    sd.BufferCount = 1;
+    sd.BufferCount = 2;
     sd.BufferDesc.Width = width;
     sd.BufferDesc.Height = height;
     sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     sd.BufferDesc.RefreshRate.Numerator = 60;
     sd.BufferDesc.RefreshRate.Denominator = 1;
     sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     sd.OutputWindow = hWnd;
     sd.SampleDesc.Count = 1;
     sd.SampleDesc.Quality = 0;
@@ -313,14 +287,24 @@ render::render(HWND hwnd) : hWnd(hwnd), hDC(GetDC(hWnd)), Cam()
     MessageBox(NULL, "Failed to create BlendStateTransparent", "ERROR", MB_OK);
   }
 
-  D3D11_QUERY_DESC qd;
-  qd.Query = D3D11_QUERY_TIMESTAMP_DISJOINT;
-  qd.MiscFlags = 0;
-  hr = Driver->CreateQuery(&qd, &TimeQuery);
+  D3D11_SAMPLER_DESC samplerDesc;
+  ZeroMemory(&samplerDesc, sizeof(samplerDesc));
+  samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+  samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+  samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+  samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+  samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+  samplerDesc.MinLOD = 0;
+  samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+  Driver->CreateSamplerState(&samplerDesc, &DefaultLinearSampler);
   if (FAILED(hr))
   {
-    MessageBox(NULL, "Failed to create TimeQuery", "ERROR", MB_OK);
+    MessageBox(NULL, "Failed to create DefaultLinearSampler", "ERROR", MB_OK);
+    return;
   }
+
+
+  D3D11_QUERY_DESC qd;
   qd.Query = D3D11_QUERY_TIMESTAMP;
   qd.MiscFlags = 0;
   hr = Driver->CreateQuery(&qd, &TimeQuery);
@@ -462,7 +446,7 @@ VOID render::Resize(INT w, INT h)
 
 VOID render::FrameStart(VOID)
 {
-  float clearColor[] = { 0.0, 0.0005, 0.001, 1.0 };
+  float clearColor[] = { 0.0, 0.0, 0.0, 1.0 };
   DriverIterface->ClearRenderTargetView(ColorPassRTView, clearColor);
   DriverIterface->ClearDepthStencilView(DepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
@@ -544,22 +528,30 @@ VOID render::FrameEnd(VOID)
     OutputDebugString(buf);
     FrameNum = 0;
     duration = 0;
+   
   }
+  //if(ref[0]) ref[0]->Release(); //IDD: didn't work
   Annotation->Release();
-}
+ }
 
 render::~render(VOID)
 {
+  if (DriverIterface) DriverIterface->ClearState();
+
+  Textures.Clear();
+  Materials.Clear();
+  Shaders.Clear();
   for (auto &l : Lights)
     delete l;
-  if (DriverIterface) DriverIterface->ClearState();
 
   delete ShdTonemap;
   delete SysMeasureLum;
   delete ScreenQuad;
 
-  if (DepthStencilTex) DepthStencilTex->Release();
+  if (TimeQuery) TimeQuery->Release(); //IDD Didn't work
+
   if (DepthStencilView) DepthStencilView->Release();
+  if (DepthStencilTex) DepthStencilTex->Release();
   if (ColorPassRTView) ColorPassRTView->Release();
   if (ColorPassShadResView) ColorPassShadResView->Release();
   if (ColorPassTex) ColorPassTex->Release();
@@ -568,14 +560,19 @@ render::~render(VOID)
   if (LightConstBuf) LightConstBuf->Release();
   if (BlendStateOpaqe) BlendStateOpaqe->Release();
   if (BlendStateTransparent) BlendStateTransparent->Release();
-  if (SwapChain1) SwapChain1->Release();
+  if (DefaultLinearSampler) DefaultLinearSampler->Release();
   if (SwapChain) SwapChain->Release();
-  if (DriverIterface1) DriverIterface1->Release();
   if (DriverIterface) DriverIterface->Release();
-  if (Driver1) Driver1->Release();
-  if (Driver) Driver->Release();
+  if (Driver)
+  {
+    UINT refs = Driver->Release();
+    if (refs > 1) debug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
+  }
+  if (debug) debug->Release();
+
   /* Delete GDI data */
   ReleaseDC(hWnd, hDC);
+
 }
 
 shader* render::AddShader(const std::string& FileNamePrefix)

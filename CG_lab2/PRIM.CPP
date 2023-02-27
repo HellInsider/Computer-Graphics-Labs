@@ -67,6 +67,8 @@ prim::~prim(VOID)
   if (VertexBuffer) VertexBuffer->Release();
   if (IndexBuffer) IndexBuffer->Release();
   if (TransformConstBuf) TransformConstBuf->Release();
+
+  if (VertexLayout) VertexLayout->Release();    //IDD
 }
 
 VOID prim::Draw(const matr& World, BOOL ExplicitShader, BOOL MeasureTime)
@@ -276,7 +278,11 @@ BOOL primitives::Load( const std::string &FileName, const matr &Transform )
   /* Correct primitives material references */
   for (INT i = 0; i < NoofP; i++)
     if (prims_mtl[i] != -1)
-      Prims[i]->Mtl = mtls[prims_mtl[i]];
+      Prims[i]->Mtl = mtls[prims_mtl[i]];   
+
+  //texs.clear(); //IDD
+  //mtls.clear();// both didn't work
+
   return TRUE;   
 }
 

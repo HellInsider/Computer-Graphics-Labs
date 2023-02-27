@@ -31,6 +31,13 @@ template<class type>
         delete r.second;
     } 
 
+    void Clear( void )
+    {
+      for (auto r : Stock)
+        delete r.second;
+      Stock.clear();
+    }
+
     type * Find( const std::string &Name )
     {
       if (Stock.count(Name) == 0)
@@ -114,6 +121,7 @@ public:
   } 
 
   VOID Apply( UINT slot );
+  static VOID ApplyNull( UINT slot );
 }; 
 
 class material

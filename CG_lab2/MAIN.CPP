@@ -13,5 +13,6 @@ INT WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInctance, CHAR *CmdLine,
 {
   anim *a = anim::GetAnim();
   a->Run();
+
   return 35;
 }

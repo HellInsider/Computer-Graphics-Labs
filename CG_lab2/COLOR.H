@@ -8,9 +8,8 @@ namespace mth
   template <class Type>
   class color
   {
-  private:
-    Type R, G, B, A;
   public:
+    Type R, G, B, A;
     color( Type r, Type g, Type b, Type a ) : R(r), G(g), B(b), A(a)
     {
     }

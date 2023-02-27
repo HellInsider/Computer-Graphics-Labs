@@ -50,11 +50,8 @@ private:
   HDC hDC;          //Work window device context
   UINT SX, SY;
   ID3D11Device* Driver = nullptr;
-  ID3D11Device1* Driver1 = nullptr;
   ID3D11DeviceContext* DriverIterface = nullptr;
-  ID3D11DeviceContext1* DriverIterface1 = nullptr;
-  IDXGISwapChain*SwapChain = nullptr;
-  IDXGISwapChain1* SwapChain1 = nullptr;
+  IDXGISwapChain* SwapChain = nullptr;
   ID3D11RenderTargetView* RenderTargetView = nullptr;
   ID3D11Texture2D* ColorPassTex = nullptr;
   ID3D11ShaderResourceView* ColorPassShadResView = nullptr;
@@ -66,8 +63,10 @@ private:
   D3D_DRIVER_TYPE DriverType = D3D_DRIVER_TYPE_NULL;
   D3D_FEATURE_LEVEL FeatureLevel = D3D_FEATURE_LEVEL_11_0;
   ID3D11BlendState* BlendStateOpaqe = nullptr, * BlendStateTransparent = nullptr;
+  ID3D11SamplerState* DefaultLinearSampler;
   ID3D11Query* TimeQuery = nullptr;
   ID3DUserDefinedAnnotation* Annotation = nullptr;
+  ID3D11Debug* debug;
   BOOL timed = false;
   std::chrono::high_resolution_clock::time_point t;
   UINT FrameNum = 0;
@@ -148,6 +147,7 @@ public:
   ID3D11Device* GetDriver( VOID ) { return Driver; }
   ID3D11DeviceContext* GetDriverIterface(VOID) { return DriverIterface; }
   ID3D11Query* GetTimeQuery(VOID) { return TimeQuery; }
+  ID3D11SamplerState* const* GetDefaultLinearSampler( VOID ) { return &DefaultLinearSampler; }
 
   shader * AddShader( const std::string &FileNamePrefix );
 

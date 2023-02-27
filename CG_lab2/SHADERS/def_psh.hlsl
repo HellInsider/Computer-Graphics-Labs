@@ -93,6 +93,7 @@ float3 Shade2(float3 P, float3 N, float2 T)
     float3 L = normalize(RawLights[i].Type * RawLights[i].PosDir + (1 - RawLights[i].Type) * (RawLights[i].PosDir - P));
     float lDist = length(RawLights[i].PosDir - P) * (1 - RawLights[i].Type);
     float3 atten = AttenuatedLight(i, lDist).rgb;
+    atten = step(0.05, atten.r + atten.g + atten.b) * atten;
     float nl = max(dot(N, L), 0.0);
     //    return nv.xxx;
     float3 F0 = lerp(float3(0.04, 0.04, 0.04), albedo, metallic);
