@@ -13,6 +13,7 @@ control::control( anim *Ani, UINT preset ) : unit()
     Ani->Cam.SetView(vec(30, 1.8, 15), vec(3, 0.8, 3));
     *Ani << new ground(Ani);
     *Ani << new house(Ani, vec(0), "Building_A08.g3dm");
+    Ani->AddLight(light::LIGHT_POINT, color(10), vec(10, 10, 0), vec(1, 0.07, 1.0));
   }
 } 
 

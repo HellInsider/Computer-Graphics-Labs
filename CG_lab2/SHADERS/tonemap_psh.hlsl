@@ -36,7 +36,7 @@ float4 main(PS_INPUT input) : SV_Target
   float4 src = Texture0.Load(int3(input.Pos.xy, 0));
   float lum = MeanLum.Load(int3(0, 0, 0));
   float key = 1.03 - (2.0 / (2.0 + log10(lum + 1.0)));
-  float exp = key / lum * 3.0 * 7.0;
+  float exp = key / lum * 8;
   float3 cur = Uncharted2Tonemap(src * exp);
   float3 whiteScale = float3(1, 1, 1) / Uncharted2Tonemap(WH);
   rez = float4(pow(cur * whiteScale, 1.0 / 2.2), 1.0);

@@ -281,6 +281,13 @@ render::render(HWND hwnd) : hWnd(hwnd), hDC(GetDC(hWnd)), Cam()
     MessageBox(NULL, "Failed to create common cb", "ERROR", MB_OK);
     return;
   }
+  bd.ByteWidth = sizeof(light_cb_data);
+  hr = Driver->CreateBuffer(&bd, nullptr, &LightConstBuf);
+  if (FAILED(hr))
+  {
+    MessageBox(NULL, "Failed to create light cb", "ERROR", MB_OK);
+    return;
+  }
 
   D3D11_BLEND_DESC BlendState;
   ZeroMemory(&BlendState, sizeof(D3D11_BLEND_DESC));
@@ -455,7 +462,7 @@ VOID render::Resize(INT w, INT h)
 
 VOID render::FrameStart(VOID)
 {
-  float clearColor[] = { 0.01, 0.05, 0.3, 1.0 };
+  float clearColor[] = { 0.0, 0.0005, 0.001, 1.0 };
   DriverIterface->ClearRenderTargetView(ColorPassRTView, clearColor);
   DriverIterface->ClearDepthStencilView(DepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
@@ -468,6 +475,25 @@ VOID render::FrameStart(VOID)
   DriverIterface->UpdateSubresource(CommonConstBuf, 0, nullptr, &d, 0, 0);
   DriverIterface->VSSetConstantBuffers(CONST_BUF_SLOT_COMMON, 1, &CommonConstBuf);
   DriverIterface->PSSetConstantBuffers(CONST_BUF_SLOT_COMMON, 1, &CommonConstBuf);
+
+  light_cb_data ld;
+  ld.NumLighs = Lights.size();
+  for (int i = 0; i < MAX_LIGHTS; i++)
+  {
+    if (i < Lights.size())
+    {
+      ld.RawLights[i].Type = Lights[i]->Type;
+      ld.RawLights[i].Color = Lights[i]->Color;
+      ld.RawLights[i].PosDir = Lights[i]->Type == light::LIGHT_POINT ? Lights[i]->Pos : Lights[i]->Dir;
+      ld.RawLights[i].Atten = Lights[i]->Attenuation;
+    }
+    else
+    {
+      ld.RawLights[i].Color = color(0);
+    }
+  }
+  DriverIterface->UpdateSubresource(LightConstBuf, 0, nullptr, &ld, 0, 0);
+  DriverIterface->PSSetConstantBuffers(CONST_BUF_SLOT_LIGHT, 1, &LightConstBuf);
 
   SetTransparency(FALSE);
 
@@ -492,6 +518,9 @@ VOID render::FrameEnd(VOID)
   DriverIterface->PSSetShaderResources(TEXTURE_CONSTANTS_SLOT, 1, &SysMeasureLum->LuminanceSRV[measure_luminance_system::LUM_RESULT]);
   DriverIterface->PSSetShaderResources(TEXTURE_SCREENSPACE_SLOT, 1, &ColorPassShadResView);
   ScreenQuad->Draw(matr(), TRUE);
+  ID3D11ShaderResourceView *ref[1] = { nullptr };
+  DriverIterface->PSSetShaderResources(TEXTURE_SCREENSPACE_SLOT, 1, ref);
+  DriverIterface->PSSetShaderResources(TEXTURE_CONSTANTS_SLOT, 1, ref);
 
   SwapChain->Present(0, 0);
 
@@ -521,6 +550,8 @@ VOID render::FrameEnd(VOID)
 
 render::~render(VOID)
 {
+  for (auto &l : Lights)
+    delete l;
   if (DriverIterface) DriverIterface->ClearState();
 
   delete ShdTonemap;
@@ -534,6 +565,7 @@ render::~render(VOID)
   if (ColorPassTex) ColorPassTex->Release();
   if (RenderTargetView) RenderTargetView->Release();
   if (CommonConstBuf) CommonConstBuf->Release();
+  if (LightConstBuf) LightConstBuf->Release();
   if (BlendStateOpaqe) BlendStateOpaqe->Release();
   if (BlendStateTransparent) BlendStateTransparent->Release();
   if (SwapChain1) SwapChain1->Release();
@@ -585,4 +617,14 @@ material* render::AddMaterial(const std::string& Name,
   Materials.Add(mtl = new material(Name, Ka, Kd, Ks, Ph, Trans, Shd, Tex0, Tex1));
   return mtl;
 }
+
+light* render::AddLight(const light::light_type type, const color col, const vec posDir, const vec atten)
+{
+  if (Lights.size() == MAX_LIGHTS)
+    return nullptr;
+  light* l = new light(type, col, type == light::LIGHT_POINT ? posDir : vec(0), type == light::LIGHT_DIRECTION ? posDir : vec(0), atten);
+  Lights.push_back(l);
+  return l;
+}
+
 

@@ -157,4 +157,34 @@ public:
   }
 }; 
 
+class light
+{
+public:
+  enum light_type
+  {
+    LIGHT_POINT,
+    LIGHT_DIRECTION
+  };
+
+  light(light_type NewType, color NewCol, vec NewPos, vec NewDir, vec NewAtten) :
+    Type(NewType), Color(NewCol), Pos(NewPos), Dir(NewDir), Attenuation(NewAtten)
+  {
+  }
+
+  color Color;
+  vec Pos; // not for direction light
+  vec Dir; // not for point light
+  vec Attenuation; // x - C0, y - C1, z - C2
+  light_type Type;
+};
+
+struct raw_light
+{
+  color Color;
+  vec PosDir;  // pos or dir depend on type
+  int32_t Type;
+  vec Atten;
+  int32_t __padding;
+};
+
 #endif /* __RES_H_ */

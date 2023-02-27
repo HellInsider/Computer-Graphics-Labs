@@ -13,7 +13,8 @@ enum const_buf_slots
   CONST_BUF_SLOT_COMMON,
   CONST_BUF_SLOT_TRANSFORM,
   CONST_BUF_SLOT_MATERIAL,
-  CONST_BUF_SLOT_SCREENSPACE
+  CONST_BUF_SLOT_SCREENSPACE,
+  CONST_BUF_SLOT_LIGHT
 };
 
 enum texture_slots
@@ -32,6 +33,14 @@ struct common_cb_data
   raw_matr MatrProj;
   vec CamLoc;
   float DeltaTime;
+};
+
+const UINT MAX_LIGHTS = 16;
+struct light_cb_data
+{
+  raw_light RawLights[MAX_LIGHTS];
+  uint32_t NumLighs;
+  uint32_t __padding[3];
 };
 
 class render
@@ -53,6 +62,7 @@ private:
   ID3D11Texture2D* DepthStencilTex = nullptr;
   ID3D11DepthStencilView* DepthStencilView = nullptr;
   ID3D11Buffer* CommonConstBuf = nullptr;
+  ID3D11Buffer* LightConstBuf = nullptr;
   D3D_DRIVER_TYPE DriverType = D3D_DRIVER_TYPE_NULL;
   D3D_FEATURE_LEVEL FeatureLevel = D3D_FEATURE_LEVEL_11_0;
   ID3D11BlendState* BlendStateOpaqe = nullptr, * BlendStateTransparent = nullptr;
@@ -109,6 +119,7 @@ public:
   resource_manager<shader> Shaders;
   resource_manager<texture> Textures;
   resource_manager<material> Materials;
+  std::vector<light *> Lights;
 
   render( HWND hwnd );
 
@@ -146,6 +157,8 @@ public:
                           const color3 &Ka = color3(0.1), const color3 &Kd = color3(0.9), const color3 &Ks = color3(0.0),
                           FLT Ph = 30, FLT Trans = 0,
                           shader *Shd = NULL, texture *Tex0 = NULL, texture *Tex1 = NULL );
+
+  light * AddLight( const light::light_type type, const color col, const vec posDir, const vec atten );
 };
 
 #endif 
