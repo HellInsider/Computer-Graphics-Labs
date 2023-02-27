@@ -189,6 +189,8 @@ render::render(HWND hwnd) : hWnd(hwnd), hDC(GetDC(hWnd)), Cam()
   if (FAILED(hr))
     MessageBox(NULL, "Failed to create device", "ERROR", MB_OK);
 
+  Driver->QueryInterface(IID_ID3D11Debug, (void**)&debug);//my str
+
   // Obtain DXGI factory from device (since we used nullptr for pAdapter above)
   IDXGIFactory1* dxgiFactory = nullptr;
   {
@@ -544,19 +546,29 @@ VOID render::FrameEnd(VOID)
     OutputDebugString(buf);
     FrameNum = 0;
     duration = 0;
+   
   }
-  Annotation->Release();
-}
+    //if(ref[0]) ref[0]->Release(); //IDD: didn't work
+ }
 
 render::~render(VOID)
-{
+{  
+ 
   for (auto &l : Lights)
     delete l;
   if (DriverIterface) DriverIterface->ClearState();
+  
+  if (Annotation)
+  {
+    Annotation->EndEvent(); //Didn't work
+    Annotation->Release();  //IDD
+  }
 
   delete ShdTonemap;
   delete SysMeasureLum;
   delete ScreenQuad;
+
+  if (TimeQuery) TimeQuery->Release(); //IDD Didn't work
 
   if (DepthStencilTex) DepthStencilTex->Release();
   if (DepthStencilView) DepthStencilView->Release();
@@ -574,8 +586,11 @@ render::~render(VOID)
   if (DriverIterface) DriverIterface->Release();
   if (Driver1) Driver1->Release();
   if (Driver) Driver->Release();
+
   /* Delete GDI data */
   ReleaseDC(hWnd, hDC);
+
+  debug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
 }
 
 shader* render::AddShader(const std::string& FileNamePrefix)

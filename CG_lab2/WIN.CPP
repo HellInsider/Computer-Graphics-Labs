@@ -98,7 +98,6 @@ win::~win( VOID )
 VOID win::Run( VOID )
 {
   MSG msg;
-
  
   while (TRUE)
   {
@@ -161,8 +160,7 @@ VOID win::FlipFullScreen( VOID )
 } 
 
 BOOL win::OnCreate( CREATESTRUCT *CS )
-{
-      
+{      
   SetTimer(hWnd, InitTimerID, 10, NULL);
   return TRUE;
 } 

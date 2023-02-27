@@ -20,7 +20,6 @@ house::house( anim *Ani, const vec &position, const std::string &FileName ) : La
   }
   for (auto &pr : trees.Prims)
     pr->Mtl = mtl;
-
 }
 
 VOID house::Response( anim *Ani )

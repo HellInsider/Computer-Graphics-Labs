@@ -68,6 +68,7 @@ private:
   ID3D11BlendState* BlendStateOpaqe = nullptr, * BlendStateTransparent = nullptr;
   ID3D11Query* TimeQuery = nullptr;
   ID3DUserDefinedAnnotation* Annotation = nullptr;
+  ID3D11Debug* debug;
   BOOL timed = false;
   std::chrono::high_resolution_clock::time_point t;
   UINT FrameNum = 0;
