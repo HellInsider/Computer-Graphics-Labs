@@ -6,7 +6,7 @@
 /*____________________*/
 
 prim::prim( const topology::base &T ) :
-  Type(T.Type), Transform(matr()), NumOfElements(T.I.size()), Mtl(NULL), Id(0)
+  Type(T.Type), Transform(matr()), NumOfElements((int)(T.I.size())), Mtl(NULL), Id(0)
 {
   /* Collect min-max information */
   Min = Max = T.V[0].P;
@@ -19,7 +19,7 @@ prim::prim( const topology::base &T ) :
   D3D11_BUFFER_DESC bd;
   ZeroMemory(&bd, sizeof(bd));
   bd.Usage = D3D11_USAGE_DEFAULT;
-  bd.ByteWidth = sizeof(VERTEX) * T.V.size();
+  bd.ByteWidth = sizeof(VERTEX) * (unsigned)(T.V.size());
   bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
   bd.CPUAccessFlags = 0;
   D3D11_SUBRESOURCE_DATA InitData;
@@ -37,7 +37,7 @@ prim::prim( const topology::base &T ) :
   rnd->GetDriverIterface()->IASetVertexBuffers(0, 1, &VertexBuffer, &stride, &offset);
 
   bd.Usage = D3D11_USAGE_DEFAULT;
-  bd.ByteWidth = sizeof(UINT) * T.I.size();
+  bd.ByteWidth = sizeof(UINT) * (unsigned)(T.I.size());
   bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
   bd.CPUAccessFlags = 0;
   InitData.pSysMem = &T.I[0];
@@ -45,7 +45,7 @@ prim::prim( const topology::base &T ) :
   if (FAILED(hr))
     MessageBox(NULL, "Failed to create index buf", "ERROR", MB_OK);
 
-  NumOfElements = T.I.size();
+  NumOfElements = (unsigned)(T.I.size());
 
   // Set index buffer
   rnd->GetDriverIterface()->IASetIndexBuffer(IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
@@ -130,7 +130,7 @@ VOID primitives::Draw( const matr &World )
   for (auto p : Prims)
   {
     p->Id = i++;
-    p->Id2 = Prims.size();
+    p->Id2 = (unsigned)(Prims.size());
     material *mtl = p->Mtl;
     if (mtl != NULL)
       if (mtl->MaterialData.Trans != 1)
@@ -145,7 +145,7 @@ VOID primitives::Draw( const matr &World )
   for (auto p : Prims)
   {
     p->Id = i++;
-    p->Id2 = Prims.size();
+    p->Id2 = (unsigned)(Prims.size());
     material *mtl = p->Mtl;
     if (mtl == NULL || mtl->MaterialData.Trans == 1)
         continue;
@@ -156,7 +156,7 @@ VOID primitives::Draw( const matr &World )
   for (auto p : Prims)
   {
     p->Id = i++;
-    p->Id2 = Prims.size();
+    p->Id2 = (unsigned)(Prims.size());
     material *mtl = p->Mtl;
     if (mtl == NULL || mtl->MaterialData.Trans == 1)
         continue;
@@ -259,7 +259,7 @@ BOOL primitives::Load( const std::string &FileName, const matr &Transform )
     fread(&W, 4, 1, F);
     fread(&H, 4, 1, F);
     fread(&C, 4, 1, F);
-    mem = new BYTE[W * H * C];
+    mem = new BYTE[static_cast<__int64>(W * H * C)];
     fread(mem, C, W * H, F);
     texs[i] = anim::GetAnim()->AddTexture(Name, W, H, C, mem);
     delete[] mem;

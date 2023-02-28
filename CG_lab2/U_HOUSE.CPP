@@ -5,8 +5,8 @@ house::house( anim *Ani, const vec &position, const std::string &FileName ) : La
 {
   BOOL f = sph.Load(FileName, matr::MatrScaling(vec(1.0)).MatrTranslate(position));
   f = trees.Load("trees lo-poly.g3dm", matr::MatrScaling(vec(0.001)).MatrTranslate(position));
-  if (f == TRUE)
-    ;
+ // if (f == TRUE)
+ //   ;
   Pos[0] = vec(0, -3.0, 0);
   Pos[1] = vec(10, 0, 15);
   Pos[2] = vec(0, 0, 5);

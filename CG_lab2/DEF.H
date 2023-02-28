@@ -3,7 +3,7 @@
 
 #include <windows.h>
 
-#pragma warning(disable : 4200 4244 4013 4018 4115 4761 4127 4305)
+#pragma warning(disable : 4200 4244 4013 4018 4115 4761 4127 4305 4996)
 
 /* WinAPI and Direct3D depended files */
 #include <d3d11_1.h>

@@ -461,7 +461,7 @@ VOID render::FrameStart(VOID)
   DriverIterface->PSSetConstantBuffers(CONST_BUF_SLOT_COMMON, 1, &CommonConstBuf);
 
   light_cb_data ld;
-  ld.NumLighs = Lights.size();
+  ld.NumLighs = (unsigned)(Lights.size());
   for (int i = 0; i < MAX_LIGHTS; i++)
   {
     if (i < Lights.size())

@@ -1,5 +1,6 @@
 #include "WIN.H"
 
+
 INT win::WindowCounter = 0;
 INT win::RefreshTimerID = 23;
 INT win::InitTimerID = 9;

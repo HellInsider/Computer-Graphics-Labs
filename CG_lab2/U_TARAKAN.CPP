@@ -12,8 +12,8 @@ tarakan::tarakan( anim *Ani, const vec2 &position ) : unit(),
   DBL tarasize = 0.01 * sqrt(sqrt(sqrt(Id)));
   INT sign = (tarasize > 0.3)? 1 : (Id % 2 - 0.5) * 2;
   BOOL f = sph.Load("tarakan.g3dm", matr::MatrScaling(vec(0.25 + sign * tarasize)));
-  if (f == TRUE)
-    ;
+  //if (f == TRUE)
+  //  ;
     sph.Prims[24]->Mtl = Ani->AddMaterial("tarakan", vec(0.0), vec(0.0, 0.0, 0.1), vec(0.001), 80, 0, Ani->AddShader("shaders\\tarakan"));
 
 }
