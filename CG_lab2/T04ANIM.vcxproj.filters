@@ -1,0 +1,136 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Math">
+      <UniqueIdentifier>{e589caa1-c935-4390-81ad-e6751713ffe3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Anim">
+      <UniqueIdentifier>{d3f38305-33ff-4167-9a1e-624ccb49d010}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Stock">
+      <UniqueIdentifier>{82501cb7-63f3-425d-bd53-72968e6c5dbb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Units">
+      <UniqueIdentifier>{fa9d8807-3e35-4389-a347-4442d5ed90d6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Math\Camera">
+      <UniqueIdentifier>{4fab7043-47af-4e9f-b28c-cd2c7665a1c6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Rendering System">
+      <UniqueIdentifier>{35f8273d-c558-4e2f-977b-ebd32df9dc76}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Anim\Input">
+      <UniqueIdentifier>{e6cd8f47-5ab8-4139-8907-68abe1c6ef07}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Units\Buildings">
+      <UniqueIdentifier>{707df9aa-34ae-4492-a186-fadf924e3ccc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Units\Nature">
+      <UniqueIdentifier>{4260977e-d907-42ee-b0d9-59e68033f9b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Units\Tarakan">
+      <UniqueIdentifier>{5e679ac4-d6f4-4ef9-9658-98124d663b45}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="VEC.H">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="COLOR.H">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="MATR.H">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="WIN.H" />
+    <ClInclude Include="DEF.H" />
+    <ClInclude Include="MTH.H">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="MTHDEF.H">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="TIMER.H">
+      <Filter>Anim</Filter>
+    </ClInclude>
+    <ClInclude Include="STOCK.H">
+      <Filter>Stock</Filter>
+    </ClInclude>
+    <ClInclude Include="ANIM.H">
+      <Filter>Anim</Filter>
+    </ClInclude>
+    <ClInclude Include="UNIT.H">
+      <Filter>Units</Filter>
+    </ClInclude>
+    <ClInclude Include="CAMERA.H">
+      <Filter>Math\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="RENDER.H">
+      <Filter>Rendering System</Filter>
+    </ClInclude>
+    <ClInclude Include="PRIM.H">
+      <Filter>Rendering System</Filter>
+    </ClInclude>
+    <ClInclude Include="INPUT.H">
+      <Filter>Anim\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="RES.H">
+      <Filter>Rendering System</Filter>
+    </ClInclude>
+    <ClInclude Include="U_CONTROL.H">
+      <Filter>Units</Filter>
+    </ClInclude>
+    <ClInclude Include="LIST_UNITS.H">
+      <Filter>Units</Filter>
+    </ClInclude>
+    <ClInclude Include="U_GROUND.H">
+      <Filter>Units\Nature</Filter>
+    </ClInclude>
+    <ClInclude Include="U_HOUSE.H">
+      <Filter>Units\Buildings</Filter>
+    </ClInclude>
+    <ClInclude Include="U_TARAKAN.H">
+      <Filter>Units\Tarakan</Filter>
+    </ClInclude>
+    <ClInclude Include="U_SKY.H">
+      <Filter>Units\Nature</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="MAIN.CPP" />
+    <ClCompile Include="WIN.CPP" />
+    <ClCompile Include="TIMER.CPP">
+      <Filter>Anim</Filter>
+    </ClCompile>
+    <ClCompile Include="ANIM.CPP">
+      <Filter>Anim</Filter>
+    </ClCompile>
+    <ClCompile Include="RENDER.CPP">
+      <Filter>Rendering System</Filter>
+    </ClCompile>
+    <ClCompile Include="PRIM.CPP">
+      <Filter>Rendering System</Filter>
+    </ClCompile>
+    <ClCompile Include="INPUT.CPP">
+      <Filter>Anim\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="RES.CPP">
+      <Filter>Rendering System</Filter>
+    </ClCompile>
+    <ClCompile Include="U_CONTROL.CPP">
+      <Filter>Units</Filter>
+    </ClCompile>
+    <ClCompile Include="U_HOUSE.CPP">
+      <Filter>Units\Buildings</Filter>
+    </ClCompile>
+    <ClCompile Include="U_GROUND.CPP">
+      <Filter>Units\Nature</Filter>
+    </ClCompile>
+    <ClCompile Include="U_TARAKAN.CPP">
+      <Filter>Units\Tarakan</Filter>
+    </ClCompile>
+    <ClCompile Include="U_SKY.CPP">
+      <Filter>Units\Nature</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
