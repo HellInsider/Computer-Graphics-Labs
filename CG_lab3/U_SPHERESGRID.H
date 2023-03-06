@@ -4,25 +4,23 @@
 #include "unit.h"
 #include "prim.h"
 
-class spheresGrid : public unit
+class spheres_grid : public unit
 {
 public:
-	/* Unit position */
-	INT gridSize = 5;
-	FLT radius = 0.5;
-	FLT offset = 1;
+  /* Unit position */
+  INT gridSize = 5;
+  FLT radius = 0.5;
+  FLT offset = 1;
 
-	primitives spheres;
+  primitives spheres;
 
-	spheresGrid(anim* Ani, const vec& position, INT gridSize);
+  spheres_grid(anim* Ani, const vec& position, INT gridSize);
 
-	~spheresGrid();
+  ~spheres_grid();
 
-	VOID Response(anim* Ani);
+  VOID Response(anim* Ani);
 
-	VOID Render(anim* Ani);
-
-	
+  VOID Render(anim* Ani);
 
 };
 

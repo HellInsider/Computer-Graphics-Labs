@@ -241,10 +241,18 @@ BOOL primitives::Load( const std::string &FileName, const matr &Transform )
   if (NoofM > 0)
   {
     fread(&store_mtls[0], sizeof(STORE_MATERIAL), NoofM, F);
+    // materials
     for (INT i = 0; i < NoofM; i++)
+    {
+      color3 albedo = store_mtls[i].Kd;
+
+      color3 rTemp = color3(1.0, 1.0, 1.0) - store_mtls[i].Ks;
+      float roughness = min((rTemp.GetX() + rTemp.GetY() + rTemp.GetZ()) / 2.0, 0.99);
+      float metallic = min((store_mtls[i].Ph + 20) / 100.0, 0.99);
+
       mtls[i] = anim::GetAnim()->AddMaterial(store_mtls[i].Name,
-        store_mtls[i].Ka, store_mtls[i].Kd, store_mtls[i].Ks,
-        store_mtls[i].Ph, store_mtls[i].Trans, NULL, NULL, NULL);
+        albedo, roughness, metallic, store_mtls[i].Trans, NULL, NULL, NULL);
+    }
   }
   /* Load textures */
   std::vector<texture *> texs;

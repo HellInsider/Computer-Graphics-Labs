@@ -24,12 +24,11 @@ cbuffer CommonConstBuf : register(b0)
 
 cbuffer ConstBuffer : register(b2)
 {
-  /* Illumination coefficients (anbient, diffuse, specular) */
-  float3 Ka;
-  float Ph;
-  float3 Kd;
+  /* pbr material */
+  float3 Albedo;
+  float Roughness;
+  float Metalness;
   float Trans;
-  float3 Ks;
 
   int IsTex0;
   int IsTex1;
@@ -48,9 +47,10 @@ const uint MAX_LIGHTS = 16;
 
 cbuffer LightConstBuf : register(b4)
 {
-  raw_light RawLights[16];
   uint NumLighs;
-  uint __padding[3];
+  uint LightingMode;
+  uint2 __padding;
+  raw_light RawLights[16];
 };
 
 
@@ -71,13 +71,12 @@ float3 Shade2(float3 P, float3 N, float2 T)
   // Resut color
   float3 color = float3(0, 0, 0);
   // materials
-  float3 albedo = Kd;
+  float3 albedo = Albedo;
   if (IsTex0 == 1)
     albedo = (Texture0.Sample(Sampler0, T)) * 1.2 + 0.05 * albedo;
 
-  float3 rTemp = float3(1.0, 1.0, 1.0) - Ks;
-  float roughness = min((rTemp.x + rTemp.y + rTemp.z) / 2.0, 0.99); // TO CHECK
-  float metallic = min((Ph + 20) / 100.0, 0.99);                    // TO CHECK
+  float roughness = Roughness;
+  float metallic = Metalness;
 
   float3 V = normalize(P - CamLoc);
   V = -V;
@@ -98,14 +97,22 @@ float3 Shade2(float3 P, float3 N, float2 T)
     //    return nv.xxx;
     float3 F0 = lerp(float3(0.04, 0.04, 0.04), albedo, metallic);
     float3 FresnelSchlick = F0 + ((float3(1.0, 1.0, 1.0) - F0) * pow(1.0 - nv, 5.0));
+    if (LightingMode == 3)
+      return FresnelSchlick;
+
     float3 Halfway = normalize(L + V);
     //return nl.xxx;
     //return (Texture0.Sample(Sampler0, T));
     float DistributionGGX = sqr(roughness) / (PI * sqr(sqr(max(dot(N, Halfway), 0.0)) * (sqr(roughness) - 1.0) + 1.0));
+    if (LightingMode == 1)
+      return DistributionGGX.xxx;
+
     float K = sqr(roughness + 1) / 8.0;
     float GeomObstructionGGX = nv / (nv * (1 - K) + K);
     float GeomSelfshadingGGX = nl / (nl * (1 - K) + K);
     float GeomFunc = GeomObstructionGGX * GeomSelfshadingGGX;
+    if (LightingMode == 2)
+      return GeomFunc.xxx;
 
     float3 Specular = FresnelSchlick * (DistributionGGX * GeomFunc / (4.0 * (nv + Threshold)));
 

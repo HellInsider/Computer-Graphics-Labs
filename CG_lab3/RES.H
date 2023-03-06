@@ -132,11 +132,10 @@ public:
   struct material_constants
   {
     /* Illumination coefficients (anbient, diffuse, specular) */
-    color3 Ka;
-    FLT Ph;
-    color3 Kd;
+    color3 Albedo;
+    FLT Roughness;
+    FLT Metalness;
     FLT Trans;
-    color3 Ks;
     BOOL IsTex0, IsTex1;
 
   } MaterialData;
@@ -152,8 +151,8 @@ public:
   } 
 
   material( const std::string &NewName,
-            const color3 &NewKa = color3(0.1, 0.3, 0.2), const color3 &NewKd = color3(0.9), const color3 &NewKs = color3(0.2),
-            FLT NewPh = 30, FLT NewTrans = 0,
+            const color3 &NewAlbedo = color3(0.9), const FLT &NewRoughness = 0.99,
+            FLT NewMetalness = 0.9, FLT NewTrans = 0,
             shader *NewShd = NULL, texture *NewTex0 = NULL, texture *NewTex1 = NULL );
 
 
@@ -192,7 +191,7 @@ struct raw_light
   vec PosDir;  // pos or dir depend on type
   int32_t Type;
   vec Atten;
-  int32_t __padding;
+  int32_t __paddings;
 };
 
 #endif /* __RES_H_ */

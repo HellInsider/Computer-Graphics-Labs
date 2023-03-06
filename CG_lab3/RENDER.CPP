@@ -314,7 +314,7 @@ render::render(HWND hwnd) : hWnd(hwnd), hDC(GetDC(hWnd)), Cam()
   }
 
 
-  AddMaterial("default", color3(0.1, 0.3, 0.2), color3(0.9), color3(0.0), 30, 0,
+  AddMaterial("default", 0.9, 0.99, 0.9, 0,
     AddShader("shaders\\def"), NULL, NULL);
 
   ShdTonemap = new shader("shaders\\tonemap");
@@ -326,16 +326,16 @@ render::render(HWND hwnd) : hWnd(hwnd), hDC(GetDC(hWnd)), Cam()
 VOID render::InitSizeDependentResources(VOID)
 {
   // Create a render target view
-  ID3D11Texture2D* pBackBuffer = nullptr;
-  HRESULT hr = SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&pBackBuffer));
+  ID3D11Texture2D* BackBufferTex = nullptr;
+  HRESULT hr = SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&BackBufferTex));
   if (FAILED(hr))
     MessageBox(NULL, "Failed to init backbuf", "ERROR", MB_OK);
 
-  hr = Driver->CreateRenderTargetView(pBackBuffer, nullptr, &RenderTargetView);
+  hr = Driver->CreateRenderTargetView(BackBufferTex, nullptr, &RenderTargetView);
   if (FAILED(hr))
     MessageBox(NULL, "Failed to CreateRenderTargetView", "ERROR", MB_OK);
-
-  pBackBuffer->Release();
+  
+  if (BackBufferTex) BackBufferTex->Release();
 
   D3D11_TEXTURE2D_DESC textureDesc;
   ZeroMemory(&textureDesc, sizeof(textureDesc));
@@ -446,10 +446,6 @@ VOID render::Resize(INT w, INT h)
 
 VOID render::FrameStart(VOID)
 {
-  float clearColor[] = { 0.0, 0.0, 0.0, 1.0 };
-  DriverIterface->ClearRenderTargetView(ColorPassRTView, clearColor);
-  DriverIterface->ClearDepthStencilView(DepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-
   common_cb_data d;
   d.MatrView.fromPtr((float*)Cam.GetMatrView());
   d.MatrProj.fromPtr((float*)Cam.GetMatrProj());
@@ -462,6 +458,7 @@ VOID render::FrameStart(VOID)
 
   light_cb_data ld;
   ld.NumLighs = (unsigned)(Lights.size());
+  ld.LightingMode = (unsigned)lightMode;
   for (int i = 0; i < MAX_LIGHTS; i++)
   {
     if (i < Lights.size())
@@ -481,7 +478,20 @@ VOID render::FrameStart(VOID)
 
   SetTransparency(FALSE);
 
-  DriverIterface->OMSetRenderTargets(1, &ColorPassRTView, DepthStencilView);
+  float clearColor[] = { 0.0, 0.0, 0.0, 1.0 };
+  DriverIterface->ClearDepthStencilView(DepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+  if (tonemapEnabled)
+  {
+    DriverIterface->ClearRenderTargetView(ColorPassRTView, clearColor);
+    DriverIterface->OMSetRenderTargets(1, &ColorPassRTView, DepthStencilView);
+  }
+  else
+  {
+    DriverIterface->ClearRenderTargetView(RenderTargetView, clearColor);
+    DriverIterface->OMSetRenderTargets(1, &RenderTargetView, DepthStencilView);
+  }
+
 
   DriverIterface->QueryInterface(__uuidof(Annotation), reinterpret_cast<void**>(&Annotation));
 
@@ -495,16 +505,22 @@ VOID render::FrameCopy(VOID)
 VOID render::FrameEnd(VOID)
 {
   Annotation->EndEvent();
-  SysMeasureLum->Draw(this, ColorPassShadResView);
+  if (tonemapEnabled)
+  {
+    SysMeasureLum->Draw(this, ColorPassShadResView);
 
-  DriverIterface->OMSetRenderTargets(1, &RenderTargetView, nullptr);
-  ShdTonemap->Apply();
-  DriverIterface->PSSetShaderResources(TEXTURE_CONSTANTS_SLOT, 1, &SysMeasureLum->LuminanceSRV[measure_luminance_system::LUM_RESULT]);
-  DriverIterface->PSSetShaderResources(TEXTURE_SCREENSPACE_SLOT, 1, &ColorPassShadResView);
-  ScreenQuad->Draw(matr(), TRUE);
-  ID3D11ShaderResourceView *ref[1] = { nullptr };
-  DriverIterface->PSSetShaderResources(TEXTURE_SCREENSPACE_SLOT, 1, ref);
-  DriverIterface->PSSetShaderResources(TEXTURE_CONSTANTS_SLOT, 1, ref);
+    DriverIterface->OMSetRenderTargets(1, &RenderTargetView, nullptr);
+    ShdTonemap->Apply();
+    DriverIterface->PSSetShaderResources(TEXTURE_CONSTANTS_SLOT, 1, &SysMeasureLum->LuminanceSRV[measure_luminance_system::LUM_RESULT]);
+    DriverIterface->PSSetShaderResources(TEXTURE_SCREENSPACE_SLOT, 1, &ColorPassShadResView);
+    ScreenQuad->Draw(matr(), TRUE);
+    ID3D11ShaderResourceView* ref[1] = { nullptr };
+    DriverIterface->PSSetShaderResources(TEXTURE_SCREENSPACE_SLOT, 1, ref);
+    DriverIterface->PSSetShaderResources(TEXTURE_CONSTANTS_SLOT, 1, ref);
+  }
+  else
+  {
+  }
 
   SwapChain->Present(0, 0);
 
@@ -594,24 +610,23 @@ texture* render::AddTexture(const std::string& Name, INT W, INT H, INT BytesPerP
 }
 
 material* render::AddMaterial(const std::string& Name,
-  const color3& Ka, const color3& Kd, const color3& Ks,
-  FLT Ph, FLT Trans,
+  const color3& Albedo, const FLT& Roughness,
+  FLT Metalness, FLT Trans,
   shader* Shd, texture* Tex0, texture* Tex1)
 {
   material* mtl;
   if ((mtl = Materials.Find(Name)) != NULL)
   {
-    mtl->MaterialData.Ka = Ka;
-    mtl->MaterialData.Kd = Kd;
-    mtl->MaterialData.Ks = Ks;
-    mtl->MaterialData.Ph = Ph;
+    mtl->MaterialData.Albedo = Albedo;
+    mtl->MaterialData.Roughness = Roughness;
+    mtl->MaterialData.Metalness = Metalness;
     mtl->MaterialData.Trans = Trans;
     mtl->Shd = Shd;
     mtl->Tex[0] = Tex0;
     mtl->Tex[1] = Tex1;
     return mtl;
   }
-  Materials.Add(mtl = new material(Name, Ka, Kd, Ks, Ph, Trans, Shd, Tex0, Tex1));
+  Materials.Add(mtl = new material(Name, Albedo, Roughness, Metalness, Trans, Shd, Tex0, Tex1));
   return mtl;
 }
 

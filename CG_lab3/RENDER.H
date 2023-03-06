@@ -36,11 +36,21 @@ struct common_cb_data
 };
 
 const UINT MAX_LIGHTS = 16;
+
 struct light_cb_data
 {
-  raw_light RawLights[MAX_LIGHTS];
   uint32_t NumLighs;
-  uint32_t __padding[3];
+  uint32_t LightingMode; // 0 - pbr, 1 -normal distribution function, 2 - geometry function, 3 - Fresnel function
+  uint32_t __padding[2];
+  raw_light RawLights[MAX_LIGHTS];
+};
+
+enum lighting_mode
+{
+  LIGHT_MODE_DEFAULT,
+  LIGHT_MODE_DISTRIBUTION,
+  LIGHT_MODE_GEOMETRY,
+  LIGHT_MODE_FRESNEL
 };
 
 class render
@@ -67,7 +77,10 @@ private:
   ID3D11Query* TimeQuery = nullptr;
   ID3DUserDefinedAnnotation* Annotation = nullptr;
   ID3D11Debug* debug;
+
   BOOL timed = false;
+  BOOL tonemapEnabled = true;
+  lighting_mode lightMode = LIGHT_MODE_DEFAULT;
   std::chrono::high_resolution_clock::time_point t;
   UINT FrameNum = 0;
   long double duration = 0;
@@ -144,6 +157,12 @@ public:
       DriverIterface->OMSetBlendState(BlendStateOpaqe, blendFactorO, sampleMask);
   }
 
+  VOID SetLightingMode( lighting_mode mode )
+  {
+    tonemapEnabled = (mode == LIGHT_MODE_DEFAULT);
+    lightMode = mode;
+  }
+
   ID3D11Device* GetDriver( VOID ) { return Driver; }
   ID3D11DeviceContext* GetDriverIterface(VOID) { return DriverIterface; }
   ID3D11Query* GetTimeQuery(VOID) { return TimeQuery; }
@@ -154,8 +173,8 @@ public:
   texture * AddTexture( const std::string &Name, INT W, INT H, INT BytesPerPixel, BYTE *Pixels );
 
   material * AddMaterial( const std::string &Name,
-                          const color3 &Ka = color3(0.1), const color3 &Kd = color3(0.9), const color3 &Ks = color3(0.0),
-                          FLT Ph = 30, FLT Trans = 0,
+                          const color3& Albedo = color3(0.9), const FLT& Roughness = 0.99,
+                          FLT Metalness = 0.9, FLT Trans = 0,
                           shader *Shd = NULL, texture *Tex0 = NULL, texture *Tex1 = NULL );
 
   light * AddLight( const light::light_type type, const color col, const vec posDir, const vec atten );

@@ -16,7 +16,7 @@ house::house( anim *Ani, const vec &position, const std::string &FileName ) : La
   material* mtl = Ani->Materials.Find("tree");
   if (mtl == NULL)
   {
-    mtl = Ani->AddMaterial("tree", vec(0.0), vec(0.0, 1.0, 0.3), vec(1.0, 1.0, 0.2), 80, 1.0, Ani->Shaders.Find("def"));
+    mtl = Ani->AddMaterial("tree", vec(0.0, 1.0, 0.3), 0.99, 0.0, 0.0, Ani->Shaders.Find("def"));
   }
   for (auto &pr : trees.Prims)
     pr->Mtl = mtl;

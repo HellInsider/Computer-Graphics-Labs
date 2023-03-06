@@ -9,7 +9,7 @@ ground::ground( anim *Ani ) : unit(),
   {
     shader* shd = Ani->Shaders.Find("def");
 
-    mtl = Ani->AddMaterial("ground", vec(0.05), vec(0.0, 0.3, 0.05), vec(0.0), -20, 0, shd);
+    mtl = Ani->AddMaterial("ground", vec(0.05, 0.3, 0.0), 0.99, 0.0, 0, shd);
   }
   sph.Mtl = mtl;
 

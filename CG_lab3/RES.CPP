@@ -2,10 +2,10 @@
 
 
 material::material(const std::string& NewName,
-  const color3& NewKa/* = color3(0.1, 0.3, 0.2)*/, const color3& NewKd/* = color3(0.9)*/, const color3& NewKs/* = color3(0.2)*/,
-  FLT NewPh/* = 30*/, FLT NewTrans/* = 0*/,
-  shader* NewShd/* = NULL*/, texture* NewTex0/* = NULL*/, texture* NewTex1/* = NULL*/) :
-  Name(NewName), MaterialData({ NewKa, NewPh, NewKd, NewTrans, NewKs }),
+  const color3& NewAlbedo, const FLT& NewRoughness,
+  FLT NewMetalness, FLT NewTrans,
+  shader* NewShd, texture* NewTex0, texture* NewTex1) :
+  Name(NewName), MaterialData({ NewAlbedo, NewRoughness, NewMetalness, NewTrans, 0, 0 }),
   Shd(NewShd)
 {
   Tex[0] = NewTex0;

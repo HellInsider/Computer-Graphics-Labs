@@ -18,7 +18,7 @@ sky::sky( anim *Ani ) : unit(),
     {
       shd = Ani->AddShader("shaders/sky");
     }
-    mtl = Ani->AddMaterial("sky", vec(0.1, 0.6, 0.8), vec(0.1), vec(0), 0, 0, shd);
+    //mtl = Ani->AddMaterial("sky", vec(0.1, 0.6, 0.8), vec(0.1), vec(0), 0, 0, shd);
     //mtl->Tex[0] = Ani->AddTexture("bin/textures/Skyoba.g32", w, h, 4, &img[4]);
   }
   sph.Mtl = mtl;
