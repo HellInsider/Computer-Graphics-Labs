@@ -107,9 +107,7 @@ public:
   {
   } 
 
-  texture( const std::string &FileName ) : Name(FileName)
-  {
-  } 
+  texture( const std::string &FileName );
 
   texture(const std::string& NewName, INT NewW, INT NewH, INT BytesPerPixel, BYTE* Pixels);
 
@@ -120,6 +118,7 @@ public:
     if (Texture) Texture->Release();
   } 
 
+  VOID InitGpuRes( INT NewW, INT NewH, INT BytesPerPixel, BYTE* Pixels );
   VOID Apply( UINT slot );
   static VOID ApplyNull( UINT slot );
 }; 

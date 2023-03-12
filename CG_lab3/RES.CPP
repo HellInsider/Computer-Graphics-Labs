@@ -1,4 +1,5 @@
 #include "anim.h"
+#include "stb_image.h"
 
 
 material::material(const std::string& NewName,
@@ -186,8 +187,26 @@ VOID shader::Apply(VOID)
   rnd->GetDriverIterface()->PSSetShader(PixelShader, nullptr, 0);
 } 
 
+texture::texture(const std::string& FileName) : Name(FileName)
+{
+  INT n;
+  BYTE *data = stbi_load(FileName.c_str(), &W, &H, &n, 4);
+
+  if (data)
+    InitGpuRes(W, H, 4, data);
+  else
+    MessageBox(NULL, "Failed to load texture", "ERROR", MB_OK);
+
+  stbi_image_free(data);
+}
+
 texture::texture(const std::string& NewName, INT NewW, INT NewH, INT BytesPerPixel, BYTE* Pixels) :
   Name(NewName), W(NewW), H(NewH)
+{
+  InitGpuRes(NewW, NewH, BytesPerPixel, Pixels);
+}
+
+VOID texture::InitGpuRes( INT NewW, INT NewH, INT BytesPerPixel, BYTE* Pixels )
 {
   render* rnd = anim::GetAnim();
   HRESULT hr;
@@ -265,8 +284,8 @@ texture::texture(const std::string& NewName, INT NewW, INT NewH, INT BytesPerPix
     MessageBox(NULL, "Failed to create ssampler", "ERROR", MB_OK);
     return;
   }
+}
 
-} 
 
 VOID texture::Apply(UINT slot)
 {

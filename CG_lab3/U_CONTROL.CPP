@@ -5,9 +5,15 @@
 #include "u_house.h"
 #include "u_spheresgrid.h"
 #include "anim.h"
+texture te;
+VOID control::Render(anim* Ani)
+{
+  //  te.Apply(30);
+}
 
 control::control( anim *Ani, UINT preset ) : unit()
 {
+  te = texture("BIN\\Textures\\cube1\\negx.jpg");
   srand(Ani->GetGlobalTime());
   if (preset == 0)
   {

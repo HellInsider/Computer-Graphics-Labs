@@ -12,6 +12,8 @@ public:
 
   VOID Response( anim *Ani );
 
+  VOID Render(anim* Ani);
+
 };
 
 #endif // __U_CONTROL_H_

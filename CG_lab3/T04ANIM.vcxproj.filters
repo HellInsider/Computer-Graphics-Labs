@@ -34,6 +34,9 @@
     <Filter Include="Units\Spheres grid">
       <UniqueIdentifier>{ef1a6ecd-5fcb-4fc7-9050-90b7ac71b07e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Stb_image">
+      <UniqueIdentifier>{358501bd-348e-4dd1-98d3-8f84939e3ff9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="VEC.H">
@@ -101,6 +104,9 @@
     <ClInclude Include="U_SPHERESGRID.H">
       <Filter>Units\Spheres grid</Filter>
     </ClInclude>
+    <ClInclude Include="stb_image.h">
+      <Filter>Stb_image</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MAIN.CPP" />
@@ -140,6 +146,9 @@
     </ClCompile>
     <ClCompile Include="U_SPHERESGRID.CPP">
       <Filter>Units\Spheres grid</Filter>
+    </ClCompile>
+    <ClCompile Include="stb_image_impl.cpp">
+      <Filter>Stb_image</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
