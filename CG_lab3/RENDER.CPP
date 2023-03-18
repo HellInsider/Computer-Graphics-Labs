@@ -287,6 +287,23 @@ render::render(HWND hwnd) : hWnd(hwnd), hDC(GetDC(hWnd)), Cam()
     MessageBox(NULL, "Failed to create BlendStateTransparent", "ERROR", MB_OK);
   }
 
+  D3D11_RASTERIZER_DESC RasterizerState;
+  ZeroMemory(&RasterizerState, sizeof(D3D11_RASTERIZER_DESC));
+  RasterizerState.FillMode = D3D11_FILL_SOLID;
+  RasterizerState.CullMode = D3D11_CULL_BACK;
+  RasterizerState.DepthClipEnable = TRUE;
+  hr = Driver->CreateRasterizerState(&RasterizerState, &RasterizerStateCull);
+  if (FAILED(hr))
+  {
+    MessageBox(NULL, "Failed to create RasterizerStateCull", "ERROR", MB_OK);
+  }
+  RasterizerState.CullMode = D3D11_CULL_NONE;
+  hr = Driver->CreateRasterizerState(&RasterizerState, &RasterizerStateNoCull);
+  if (FAILED(hr))
+  {
+    MessageBox(NULL, "Failed to create RasterizerStateNoCull", "ERROR", MB_OK);
+  }
+
   D3D11_SAMPLER_DESC samplerDesc;
   ZeroMemory(&samplerDesc, sizeof(samplerDesc));
   samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
@@ -576,6 +593,8 @@ render::~render(VOID)
   if (LightConstBuf) LightConstBuf->Release();
   if (BlendStateOpaqe) BlendStateOpaqe->Release();
   if (BlendStateTransparent) BlendStateTransparent->Release();
+  if (RasterizerStateCull) RasterizerStateCull->Release();
+  if (RasterizerStateNoCull) RasterizerStateNoCull->Release();
   if (DefaultLinearSampler) DefaultLinearSampler->Release();
   if (SwapChain) SwapChain->Release();
   if (DriverIterface) DriverIterface->Release();
@@ -606,6 +625,14 @@ texture* render::AddTexture(const std::string& Name, INT W, INT H, INT BytesPerP
   if ((tex = Textures.Find(Name)) != NULL)
     return tex;
   Textures.Add(tex = new texture(Name, W, H, BytesPerPixel, Pixels));
+  return tex;
+}
+texture* render::AddTexture(const std::string& Name, BOOL srgb, BOOL isCube)
+{
+  texture* tex;
+  if ((tex = Textures.Find(Name)) != NULL)
+    return tex;
+  Textures.Add(tex = new texture(Name, srgb, (isCube ? texture::tex_type::TEX_TYPE_CUBE : texture::tex_type::TEX_TYPE_PLAIN)));
   return tex;
 }
 

@@ -96,18 +96,25 @@ public:
   /* Texture name */
   std::string Name;
 
+  enum tex_type
+  {
+    TEX_TYPE_PLAIN,
+    TEX_TYPE_CUBE
+  } Type;
+
   /* Image size */
   INT W, H;
 
   ID3D11ShaderResourceView* TextureSRV = nullptr;
   ID3D11SamplerState* Sampler= nullptr;
   ID3D11Texture2D* Texture = nullptr;
+  ID3D11Texture2D* TextureCubeFaces[6] = { nullptr };
 
   texture( VOID )
   {
   } 
 
-  texture( const std::string &FileName );
+  texture( const std::string &FileName, BOOL srgb = FALSE, tex_type NewType = TEX_TYPE_PLAIN );
 
   texture(const std::string& NewName, INT NewW, INT NewH, INT BytesPerPixel, BYTE* Pixels);
 
@@ -116,9 +123,11 @@ public:
     if (Sampler) Sampler->Release();
     if (TextureSRV) TextureSRV->Release();
     if (Texture) Texture->Release();
+    for (auto& t : TextureCubeFaces)
+      if (t) t->Release();
   } 
 
-  VOID InitGpuRes( INT NewW, INT NewH, INT BytesPerPixel, BYTE* Pixels );
+  VOID InitGpuRes( INT NewW, INT NewH, INT BytesPerPixel, BYTE** Pixels, BOOL srgb = FALSE, tex_type NewType = TEX_TYPE_PLAIN);
   VOID Apply( UINT slot );
   static VOID ApplyNull( UINT slot );
 }; 

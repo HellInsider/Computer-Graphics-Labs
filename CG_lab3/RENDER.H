@@ -24,6 +24,7 @@ enum texture_slots
   TEXTURE_SCREENSPACE_SLOT,
   TEXTURE_CONSTANTS_SLOT,
   TEXTURE_CONSTANTS_SLOT_2,
+  TEXTURE_CUBE_ENV_SLOT,
   k_NUM_OF_SLOTS
 };
 
@@ -73,6 +74,7 @@ private:
   D3D_DRIVER_TYPE DriverType = D3D_DRIVER_TYPE_NULL;
   D3D_FEATURE_LEVEL FeatureLevel = D3D_FEATURE_LEVEL_11_0;
   ID3D11BlendState* BlendStateOpaqe = nullptr, * BlendStateTransparent = nullptr;
+  ID3D11RasterizerState* RasterizerStateCull = nullptr, *RasterizerStateNoCull = nullptr;
   ID3D11SamplerState* DefaultLinearSampler;
   ID3D11Query* TimeQuery = nullptr;
   ID3DUserDefinedAnnotation* Annotation = nullptr;
@@ -156,6 +158,13 @@ public:
     else
       DriverIterface->OMSetBlendState(BlendStateOpaqe, blendFactorO, sampleMask);
   }
+  VOID SetCulling(BOOL enable)
+  {
+    if (enable)
+      DriverIterface->RSSetState(RasterizerStateCull);
+    else
+      DriverIterface->RSSetState(RasterizerStateNoCull);
+  }
 
   VOID SetLightingMode( lighting_mode mode )
   {
@@ -171,6 +180,7 @@ public:
   shader * AddShader( const std::string &FileNamePrefix );
 
   texture * AddTexture( const std::string &Name, INT W, INT H, INT BytesPerPixel, BYTE *Pixels );
+  texture * AddTexture( const std::string &Name, BOOL srgb = FALSE, BOOL isCube = FALSE );
 
   material * AddMaterial( const std::string &Name,
                           const color3& Albedo = color3(0.9), const FLT& Roughness = 0.99,

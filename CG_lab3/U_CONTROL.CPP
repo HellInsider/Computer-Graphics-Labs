@@ -4,22 +4,18 @@
 #include "u_ground.h"
 #include "u_house.h"
 #include "u_spheresgrid.h"
+#include "u_sky.h"
 #include "anim.h"
-texture te;
-VOID control::Render(anim* Ani)
-{
-  //  te.Apply(30);
-}
 
 control::control( anim *Ani, UINT preset ) : unit()
 {
-  te = texture("BIN\\Textures\\cube1\\negx.jpg");
   srand(Ani->GetGlobalTime());
   if (preset == 0)
   {
     Ani->Cam.SetView(vec(5, 4.8, 10), vec(5, 4.8, 0));
-    *Ani << new ground(Ani);
+ //   *Ani << new ground(Ani);
     *Ani << new spheres_grid(Ani, vec(0, 1, 0), 10);
+    *Ani << new sky(Ani);
     l1 = Ani->AddLight(light::LIGHT_POINT, color(100, 100, 100, 1), vec(10, 7, 10), vec(1, 0.0, 1.0));
   }
 } 

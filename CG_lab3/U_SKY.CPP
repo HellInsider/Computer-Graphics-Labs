@@ -2,14 +2,9 @@
 #include "anim.h"
 
 sky::sky( anim *Ani ) : unit(),
-                                    sph(topology::sphere::sphere(vec(0), 100, 50, 23))
+                                    sph(topology::box::box(vec(-100), vec(100)))
 
 {
-  /*std::vector<BYTE> img((std::istreambuf_iterator<char>(std::ifstream("bin/textures/Skyoba.g32"))),
-                        std::istreambuf_iterator<char>());
-  INT
-    w = img[0] + (img[1] << 8),
-    h = img[2] + (img[3] << 8);*/
   material *mtl = Ani->Materials.Find("sky");
   if (mtl == NULL)
   {
@@ -18,20 +13,21 @@ sky::sky( anim *Ani ) : unit(),
     {
       shd = Ani->AddShader("shaders/sky");
     }
-    //mtl = Ani->AddMaterial("sky", vec(0.1, 0.6, 0.8), vec(0.1), vec(0), 0, 0, shd);
-    //mtl->Tex[0] = Ani->AddTexture("bin/textures/Skyoba.g32", w, h, 4, &img[4]);
+    mtl = Ani->AddMaterial("sky", vec(0.5, 0.5, 0.5), 0.5, 0.5, 0, shd);
+    mtl->Tex[0] = Ani->AddTexture("BIN\\Textures\\cube1\\*.jpg", TRUE, TRUE);
   }
   sph.Mtl = mtl;
 }
 
 VOID sky::Response( anim *Ani )
 {
-
+  sph.Transform = matr::MatrTranslation(Ani->Cam.GetLoc());
 }
 
 VOID sky::Render( anim *Ani )
 {
-  ///glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  Ani->SetCulling(false);
   sph.Draw(matr());     
+  Ani->SetCulling(true);
 }
 

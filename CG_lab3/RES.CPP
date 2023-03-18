@@ -187,26 +187,47 @@ VOID shader::Apply(VOID)
   rnd->GetDriverIterface()->PSSetShader(PixelShader, nullptr, 0);
 } 
 
-texture::texture(const std::string& FileName) : Name(FileName)
+texture::texture(const std::string& FileName, BOOL srgb, tex_type NewType) : Name(FileName), Type(NewType)
 {
   INT n;
-  BYTE *data = stbi_load(FileName.c_str(), &W, &H, &n, 4);
 
-  if (data)
-    InitGpuRes(W, H, 4, data);
-  else
-    MessageBox(NULL, "Failed to load texture", "ERROR", MB_OK);
+  if (NewType == TEX_TYPE_PLAIN)
+  {
+    BYTE* data = stbi_load(FileName.c_str(), &W, &H, &n, 4);
+    if (data)
+      InitGpuRes(W, H, 4, &data, srgb);
+    else
+      MessageBox(NULL, "Failed to load texture", "ERROR", MB_OK);
+    stbi_image_free(data);
+  }
+  else if (NewType == TEX_TYPE_CUBE)
+  {
+    BYTE* data[6];
+    size_t p = FileName.find_last_of('*');
+    std::string format = FileName.substr(p + 1, std::string::npos);
+    std::string path = FileName.substr(0, p - 1);
+    std::string cubeFaces[] = { "posx", "negx", "posy", "negy", "posz", "negz" };
 
-  stbi_image_free(data);
+    for (int i = 0; i < 6; i++)
+    {
+      std::string curFace = path + "\\" + cubeFaces[i] + format;
+      data[i] = stbi_load(curFace.c_str(), &W, &H, &n, 4);
+      if (!data[i])
+        MessageBox(NULL, "Failed to load texture", "ERROR", MB_OK);
+    }
+    InitGpuRes(W, H, 4, data, srgb, TEX_TYPE_CUBE);
+    for (int i = 0; i < 6; i++)
+      stbi_image_free(data[i]);
+  }
 }
 
 texture::texture(const std::string& NewName, INT NewW, INT NewH, INT BytesPerPixel, BYTE* Pixels) :
-  Name(NewName), W(NewW), H(NewH)
+  Name(NewName), W(NewW), H(NewH), Type(TEX_TYPE_PLAIN)
 {
-  InitGpuRes(NewW, NewH, BytesPerPixel, Pixels);
+  InitGpuRes(NewW, NewH, BytesPerPixel, &Pixels);
 }
 
-VOID texture::InitGpuRes( INT NewW, INT NewH, INT BytesPerPixel, BYTE* Pixels )
+VOID texture::InitGpuRes( INT NewW, INT NewH, INT BytesPerPixel, BYTE** Pixels, BOOL srgb, tex_type NewType)
 {
   render* rnd = anim::GetAnim();
   HRESULT hr;
@@ -219,7 +240,10 @@ VOID texture::InitGpuRes( INT NewW, INT NewH, INT BytesPerPixel, BYTE* Pixels )
   else if (BytesPerPixel * 8 == 16 * 4)
     format = DXGI_FORMAT_R16G16B16A16_UINT;
   else if (BytesPerPixel * 8 == 8 * 4)
-    format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    if (srgb)
+      format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+    else
+      format = DXGI_FORMAT_R8G8B8A8_UNORM;
   else
   {
     MessageBox(NULL, "Unknown texture format", "ERROR", MB_OK);
@@ -241,23 +265,74 @@ VOID texture::InitGpuRes( INT NewW, INT NewH, INT BytesPerPixel, BYTE* Pixels )
 
 
   D3D11_SUBRESOURCE_DATA subres;
-  subres.pSysMem = Pixels;
   subres.SysMemPitch = W * BytesPerPixel;
   subres.SysMemSlicePitch = 0; // Not needed since this is a 2d texture
 
-  hr = rnd->GetDriver()->CreateTexture2D(&textureDesc, &subres, &Texture);
-  if (FAILED(hr))
+  if (NewType == TEX_TYPE_PLAIN)
   {
-    MessageBox(NULL, "Failed to create texture", "ERROR", MB_OK);
-    return;
+    subres.pSysMem = *Pixels;
+    hr = rnd->GetDriver()->CreateTexture2D(&textureDesc, &subres, &Texture);
+    if (FAILED(hr))
+    {
+      MessageBox(NULL, "Failed to create texture", "ERROR", MB_OK);
+      return;
+    }
+  }
+  else if (NewType == TEX_TYPE_CUBE)
+  {
+    textureDesc.Usage = D3D11_USAGE_STAGING;
+    textureDesc.BindFlags = 0;
+    textureDesc.CPUAccessFlags |= D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
+    for (int i = 0; i < 6; i++)
+    {
+      subres.pSysMem = Pixels[i];
+      hr = rnd->GetDriver()->CreateTexture2D(&textureDesc, &subres, &TextureCubeFaces[i]);
+      if (FAILED(hr))
+      {
+        MessageBox(NULL, "Failed to create cube face", "ERROR", MB_OK);
+        return;
+      }
+    }
+    textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    textureDesc.ArraySize = 6;
+    textureDesc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE;
+    textureDesc.CPUAccessFlags &= ~(D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE);
+    textureDesc.Usage = D3D11_USAGE_DEFAULT;
+    hr = rnd->GetDriver()->CreateTexture2D(&textureDesc,  NULL, &Texture);
+    if (FAILED(hr))
+    {
+      MessageBox(NULL, "Failed to create cube texture", "ERROR", MB_OK);
+      return;
+    }
+    for (int i = 0; i < 6; i++)
+    {
+
+      D3D11_MAPPED_SUBRESOURCE mappedTex2D;
+      hr = (rnd->GetDriverIterface()->Map(TextureCubeFaces[i], 0, D3D11_MAP_READ, 0, &mappedTex2D));
+      if (FAILED(hr))
+      {
+        MessageBox(NULL, "Failed to map cube texture", "ERROR", MB_OK);
+        return;
+      }
+      rnd->GetDriverIterface()->UpdateSubresource(Texture,
+        D3D11CalcSubresource(0, i, textureDesc.MipLevels),
+        0, mappedTex2D.pData, mappedTex2D.RowPitch, mappedTex2D.DepthPitch);
+
+      rnd->GetDriverIterface()->Unmap(TextureCubeFaces[i], 0);
+      TextureCubeFaces[i]->Release();
+      TextureCubeFaces[i] = NULL;
+    }
   }
 
 
   D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
   shaderResourceViewDesc.Format = textureDesc.Format;
-  shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
   shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
   shaderResourceViewDesc.Texture2D.MipLevels = 1;
+  if (NewType == TEX_TYPE_PLAIN)
+    shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+  else if (NewType == TEX_TYPE_CUBE)
+    shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
 
   rnd->GetDriver()->CreateShaderResourceView(Texture, &shaderResourceViewDesc, &TextureSRV);
   if (FAILED(hr))
