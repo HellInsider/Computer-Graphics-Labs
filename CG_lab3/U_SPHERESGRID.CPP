@@ -8,7 +8,7 @@ spheres_grid::spheres_grid(anim* Ani, const vec& pos, INT gridSize) : unit(), gr
         for (int j = 0; j < gridSize; j++) 
         {
           material* mtl = Ani->AddMaterial(std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(gridSize),
-            color3(0.5), 1.0 / gridSize * (i + 0.5), 1.0 / gridSize * (j + 0.5));
+            color3(1.0, 0.3, 0.1), 1.0 / gridSize * (i + 0.5), 1.0 / gridSize * (j + 0.5));
           spheres.Prims.push_back(new prim(topology::sphere::sphere(pos + vec(offset * i, offset * j, 1), radius)));
           spheres.Prims[i * gridSize + j]->Mtl = mtl;
         }
