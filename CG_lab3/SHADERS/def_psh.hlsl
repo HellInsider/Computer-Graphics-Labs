@@ -93,16 +93,18 @@ float3 Shade2(float3 P, float3 N, float2 T)
     float lDist = length(RawLights[i].PosDir - P) * (1 - RawLights[i].Type);
     float3 atten = AttenuatedLight(i, lDist).rgb;
     atten = step(0.05, atten.r + atten.g + atten.b) * atten;
-    float nl = max(dot(N, L), 0.0);
-    //    return nv.xxx;
-    float3 F0 = lerp(float3(0.04, 0.04, 0.04), albedo, metallic);
-    float3 FresnelSchlick = F0 + ((float3(1.0, 1.0, 1.0) - F0) * pow(1.0 - nv, 5.0));
-    if (LightingMode == 3)
-      return FresnelSchlick;
 
     float3 Halfway = normalize(L + V);
-    //return nl.xxx;
-    //return (Texture0.Sample(Sampler0, T));
+    float nl = dot(N, L);
+    float isNL = step(0.0, nl);
+    nl = nl * isNL;
+    float hv = max(dot(Halfway, V), 0.0);
+
+    float3 F0 = lerp(float3(0.04, 0.04, 0.04), albedo, metallic);
+    float3 FresnelSchlick = F0 + ((float3(1.0, 1.0, 1.0) - F0) * pow(1.0 - hv, 5.0));
+    if (LightingMode == 3)
+      return FresnelSchlick * isNL;
+
     float DistributionGGX = sqr(roughness) / (PI * sqr(sqr(max(dot(N, Halfway), 0.0)) * (sqr(roughness) - 1.0) + 1.0));
     if (LightingMode == 1)
       return DistributionGGX.xxx;
