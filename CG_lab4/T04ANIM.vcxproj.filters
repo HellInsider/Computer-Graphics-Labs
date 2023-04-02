@@ -24,6 +24,7 @@
     <ClInclude Include="Math\MTH.H" />
     <ClInclude Include="Math\COLOR.H" />
     <ClInclude Include="Anim\Input\INPUT.H" />
+    <ClInclude Include="Stb_image\stb_image_write.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MAIN.CPP" />
@@ -41,5 +42,6 @@
     <ClCompile Include="Rendering System\RENDER.CPP" />
     <ClCompile Include="Rendering System\PRIM.CPP" />
     <ClCompile Include="Anim\Input\INPUT.CPP" />
+    <ClCompile Include="Stb_image\stb_image_write_impl.cpp" />
   </ItemGroup>
 </Project>

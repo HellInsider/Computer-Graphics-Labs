@@ -1,5 +1,8 @@
 #include "../Anim/anim.h"
 #include "../Stb_image/stb_image.h"
+#include "../Stb_image/stb_image_write.h"
+#include "../Math/MTHDEF.H"
+#include <math.h>
 
 
 material::material(const std::string& NewName,
@@ -202,10 +205,17 @@ texture::texture(const std::string& FileName, BOOL srgb, tex_type NewType) : Nam
   }
   else if (NewType == TEX_TYPE_CUBE)
   {
+    size_t p = FileName.find_last_of('\\');
+    std::string format = FileName.substr(p + 2, std::string::npos);
+    std::string path = FileName.substr(0, p);
+
+    if(!srgb)
+    {
+        ProcessEquirectangularImage(FileName);
+        format = ".png";
+    }
+
     BYTE* data[6];
-    size_t p = FileName.find_last_of('*');
-    std::string format = FileName.substr(p + 1, std::string::npos);
-    std::string path = FileName.substr(0, p - 1);
     std::string cubeFaces[] = { "posx", "negx", "posy", "negy", "posz", "negz" };
 
     for (int i = 0; i < 6; i++)
@@ -219,6 +229,117 @@ texture::texture(const std::string& FileName, BOOL srgb, tex_type NewType) : Nam
     for (int i = 0; i < 6; i++)
       stbi_image_free(data[i]);
   }
+}
+
+VOID texture::ProcessEquirectangularImage(const std::string& FileName)
+{
+    INT n;
+    FLOAT offset = 1.0f;
+    int cubemapSideSize = 512;
+    BYTE* squares[6];
+    size_t p = FileName.find_last_of('\\');
+    std::string path = FileName.substr(0, p);
+    //std::string imgName = FileName.substr(p+1, std::string::npos);
+    std::string cubeFaces[] = { "posx", "negx", "posy", "negy", "posz", "negz" };
+
+    
+    stbi_uc* data = stbi_load( FileName.c_str(), &W, &H, &n, 0);
+    if (!data)
+    {
+        MessageBox(NULL, "Failed to load equirectangular image", "ERROR", MB_OK);
+        return;
+    }
+
+    for(int i = 0; i < 6; i++)
+    {
+        squares[i] = new BYTE[cubemapSideSize * cubemapSideSize * n];
+    }
+    
+
+    std::pair<FLOAT, FLOAT> c;
+    for (int i = 0; i < cubemapSideSize; i++)
+    {
+        for (int j = 0; j < cubemapSideSize; j++)
+        {
+            c = DecartToEquirectangularProjection(offset, float(i) / cubemapSideSize, float(j) / cubemapSideSize);   //U, V
+            for (int chan = 0; chan < n; chan++)
+            {
+                squares[0][(i * cubemapSideSize + j) * n + chan] = data[((int)(((H - 1) * c.first )) * W + (int)(((W - 1) * c.second))) * n + chan];   //posx
+            }
+
+            c = DecartToEquirectangularProjection(-offset,  float(i) / cubemapSideSize, float(j) / cubemapSideSize);
+            for (int chan = 0; chan < n; chan++)
+            {
+                squares[1][(i * cubemapSideSize + j) * n + chan] = data[((int)(((H - 1) * c.first )) * W + (int)(((W - 1) * c.second))) * n + chan];   //negx
+            }
+
+            c = DecartToEquirectangularProjection(float(i) / cubemapSideSize, offset, float(j) / cubemapSideSize);
+            for (int chan = 0; chan < n; chan++)
+            {
+                squares[2][(i * cubemapSideSize + j) * n + chan] = data[((int)(((H - 1) * c.first )) * W + (int)(((W - 1) * c.second))) * n + chan];    //posy
+            }
+
+            c = DecartToEquirectangularProjection(float(i) / cubemapSideSize, -offset, float(j) / cubemapSideSize);
+            for (int chan = 0; chan < n; chan++)
+            {
+                squares[3][(i * cubemapSideSize + j) * n + chan] = data[((int)(((H - 1) * c.first)) * W + (int)(((W - 1) * c.second))) * n + chan];    //negy
+            }
+
+            c = DecartToEquirectangularProjection(float(i) / cubemapSideSize, float(j) / cubemapSideSize, offset);
+            for (int chan = 0; chan < n; chan++)
+            {
+                squares[4][(i * cubemapSideSize + j) * n + chan] = data[((int)(((H - 1) * c.first)) * W + (int)(((W - 1) * c.second))) * n + chan];    //posz
+            }
+
+            c = DecartToEquirectangularProjection(float(i) / cubemapSideSize, float(j) / cubemapSideSize, -offset);
+            for (int chan = 0; chan < n; chan++)
+            {
+                squares[5][(i * cubemapSideSize + j) * n + chan] = data[((int)(((H - 1) * c.first)) * W + (int)(((W - 1) * c.second))) * n + chan];    //negz
+            }
+        }
+    }
+    
+    int k = 0;
+    for each (BYTE * square in squares)
+    {
+        stbi_write_png((path + "\\" + cubeFaces[k] + ".png").c_str(), cubemapSideSize, cubemapSideSize, n, square, cubemapSideSize * n);
+        k++;
+        delete[] square;
+    }
+    //stbi_image_free(rawData);
+    stbi_image_free(data);
+}
+
+std::pair<FLOAT, FLOAT> texture::DecartToEquirectangularProjection(FLOAT x, FLOAT y, FLOAT z)    //returns U, V
+{
+    FLOAT sum = abs(x) + abs(y) + abs(z);
+    x = x / sum;
+    y = y / sum;
+    z = z / sum;
+
+    float U, V;
+    U = 1.0f - atan2f(z, x) / (2 * mth::PI);
+    V = 1.0f -( asin(y) / mth::PI + 0.5f);
+
+    if (U > 1) 
+    {
+        U = 1;
+    }
+    else if (U < 0) 
+    {
+        U = 0;
+    }
+
+    if (V > 1)
+    {
+        V = 1;
+    }
+    else if (V < 0)
+    {
+        V = 0;
+    }
+
+    return std::pair<FLOAT, FLOAT>(V,U);
 }
 
 texture::texture(const std::string& NewName, INT NewW, INT NewH, INT BytesPerPixel, BYTE* Pixels) :

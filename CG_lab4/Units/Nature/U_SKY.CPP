@@ -14,7 +14,10 @@ sky::sky( anim *Ani ) : unit(),
       shd = Ani->AddShader("shaders/sky");
     }
     mtl = Ani->AddMaterial("sky", vec(0.5, 0.5, 0.5), 0.5, 0.5, 0, shd);
-    mtl->Tex[0] = Ani->AddTexture("BIN\\Textures\\cube1\\*.jpg", TRUE, TRUE);
+    //mtl->Tex[0] = Ani->AddTexture("BIN\\Textures\\cube1\\*.jpg", TRUE, TRUE);
+    //mtl->Tex[0] = Ani->AddTexture("BIN\\Textures\\HDRI\\burnt_warehouse_1k\\burnt_warehouse_1k.hdr", FALSE, TRUE);
+    mtl->Tex[0] = Ani->AddTexture("BIN\\Textures\\HDRI\\school_hall_2k\\school_hall_2k.hdr", FALSE, TRUE);
+    //mtl->Tex[0] = Ani->AddTexture("BIN\\Textures\\HDRI\\forgotten_miniland_4k\\forgotten_miniland_4k.hdr", FALSE, TRUE);
   }
   sph.Mtl = mtl;
 }
