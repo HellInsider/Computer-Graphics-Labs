@@ -261,40 +261,40 @@ VOID texture::ProcessEquirectangularImage(const std::string& FileName)
     {
         for (int j = 0; j < cubemapSideSize; j++)
         {
-            c = DecartToEquirectangularProjection(offset, float(i) / cubemapSideSize, float(j) / cubemapSideSize);   //U, V
+            c = DecartToEquirectangularProjection(offset, -(2 * float(i) / cubemapSideSize - 1), 2 * float(j) / cubemapSideSize - 1);   //U, V
             for (int chan = 0; chan < n; chan++)
             {
                 squares[0][(i * cubemapSideSize + j) * n + chan] = data[((int)(((H - 1) * c.first )) * W + (int)(((W - 1) * c.second))) * n + chan];   //posx
             }
 
-            c = DecartToEquirectangularProjection(-offset,  float(i) / cubemapSideSize, float(j) / cubemapSideSize);
+            c = DecartToEquirectangularProjection(-offset,  -(2 * float(i) / cubemapSideSize - 1), -(2 * float(j) / cubemapSideSize - 1));
             for (int chan = 0; chan < n; chan++)
             {
                 squares[1][(i * cubemapSideSize + j) * n + chan] = data[((int)(((H - 1) * c.first )) * W + (int)(((W - 1) * c.second))) * n + chan];   //negx
             }
 
-            c = DecartToEquirectangularProjection(float(i) / cubemapSideSize, offset, float(j) / cubemapSideSize);
+            c = DecartToEquirectangularProjection(2 * float(j) / cubemapSideSize - 1, offset, -(2 * float(i) / cubemapSideSize - 1));
             for (int chan = 0; chan < n; chan++)
             {
                 squares[2][(i * cubemapSideSize + j) * n + chan] = data[((int)(((H - 1) * c.first )) * W + (int)(((W - 1) * c.second))) * n + chan];    //posy
             }
 
-            c = DecartToEquirectangularProjection(float(i) / cubemapSideSize, -offset, float(j) / cubemapSideSize);
+            c = DecartToEquirectangularProjection(2 * float(j) / cubemapSideSize - 1, -offset, 2 * float(i) / cubemapSideSize - 1);
             for (int chan = 0; chan < n; chan++)
             {
                 squares[3][(i * cubemapSideSize + j) * n + chan] = data[((int)(((H - 1) * c.first)) * W + (int)(((W - 1) * c.second))) * n + chan];    //negy
             }
 
-            c = DecartToEquirectangularProjection(float(i) / cubemapSideSize, float(j) / cubemapSideSize, offset);
-            for (int chan = 0; chan < n; chan++)
-            {
-                squares[4][(i * cubemapSideSize + j) * n + chan] = data[((int)(((H - 1) * c.first)) * W + (int)(((W - 1) * c.second))) * n + chan];    //posz
-            }
-
-            c = DecartToEquirectangularProjection(float(i) / cubemapSideSize, float(j) / cubemapSideSize, -offset);
+            c = DecartToEquirectangularProjection(-(2 * float(j) / cubemapSideSize - 1), -(2 * float(i) / cubemapSideSize - 1), offset);
             for (int chan = 0; chan < n; chan++)
             {
                 squares[5][(i * cubemapSideSize + j) * n + chan] = data[((int)(((H - 1) * c.first)) * W + (int)(((W - 1) * c.second))) * n + chan];    //negz
+            }
+
+            c = DecartToEquirectangularProjection(2 * float(j) / cubemapSideSize - 1, -(2 * float(i) / cubemapSideSize - 1), -offset);
+            for (int chan = 0; chan < n; chan++)
+            {
+                squares[4][(i * cubemapSideSize + j) * n + chan] = data[((int)(((H - 1) * c.first)) * W + (int)(((W - 1) * c.second))) * n + chan];    //posz
             }
         }
     }
@@ -312,7 +312,7 @@ VOID texture::ProcessEquirectangularImage(const std::string& FileName)
 
 std::pair<FLOAT, FLOAT> texture::DecartToEquirectangularProjection(FLOAT x, FLOAT y, FLOAT z)    //returns U, V
 {
-    FLOAT sum = abs(x) + abs(y) + abs(z);
+    FLOAT sum = sqrt(x * x + y * y + z * z);
     x = x / sum;
     y = y / sum;
     z = z / sum;
@@ -321,22 +321,23 @@ std::pair<FLOAT, FLOAT> texture::DecartToEquirectangularProjection(FLOAT x, FLOA
     U = 1.0f - atan2f(z, x) / (2 * mth::PI);
     V = 1.0f -( asin(y) / mth::PI + 0.5f);
 
-    if (U > 1) 
+    while (U > 1) 
     {
-        U = 1;
-    }
-    else if (U < 0) 
-    {
-        U = 0;
+        U -= 1;
     }
 
-    if (V > 1)
+    while (U < 0) 
     {
-        V = 1;
+        U += 1;
     }
-    else if (V < 0)
+
+    while (V > 1)
     {
-        V = 0;
+        V -= 1;
+    }
+    while (V < 0)
+    {
+        V += 1;
     }
 
     return std::pair<FLOAT, FLOAT>(V,U);
