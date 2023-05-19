@@ -14,6 +14,10 @@ cbuffer CommonConstBuf : register(b0)
   matrix MatrProj;
   float3 CamLoc;
   float DeltaTime;
+  int IsEnviromentTexture;
+  int IsIrradianceTexture;
+  int _pad0;
+  int _pad1;
 };
 #endif
 

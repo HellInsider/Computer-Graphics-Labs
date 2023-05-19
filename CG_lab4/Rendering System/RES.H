@@ -130,8 +130,9 @@ public:
   VOID InitGpuRes( INT NewW, INT NewH, INT BytesPerPixel, BYTE** Pixels, BOOL srgb = FALSE, tex_type NewType = TEX_TYPE_PLAIN);
   VOID Apply( UINT slot );
   static VOID ApplyNull( UINT slot );
-  std::pair<FLOAT, FLOAT> DecartToEquirectangularProjection(FLOAT x, FLOAT y, FLOAT z);
-  VOID ProcessEquirectangularImage(const std::string& FileName);
+  static inline float Sample(vec2 coord, float* data, int W, int H, int numChannels, int channel);
+  static vec2 DecartToEquirectangularProjection(FLOAT x, FLOAT y, FLOAT z);
+  static VOID ProcessEquirectangularImage(const std::string& FileName);
 }; 
 
 class material

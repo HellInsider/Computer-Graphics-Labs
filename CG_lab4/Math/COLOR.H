@@ -17,6 +17,22 @@ namespace mth
     color( Type c = 0 ) : R(c), G(c), B(c), A(1)
     {
     }
+
+    color operator+(const color& c1)
+    {
+      return color(c1.R + R, c1.G + G, c1.B + B, c1.A + A);
+    }
+
+    color& operator+=(const color& c)
+    {
+      *this = *this + c;
+      return *this;
+    }
+
+    color operator*(DBL n)
+    {
+      return color(R * n, G * n, B * n, A * n);
+    }
   };
 }
 #endif // __COLOR_H_

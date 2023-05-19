@@ -95,6 +95,27 @@ VOID prim::Draw(const matr& World, BOOL ExplicitShader, BOOL MeasureTime)
         mtl->Apply();
     }
 
+    // apply shared Textures
+    {
+      if (rnd->sharedTextures.enviromentTex != nullptr)
+      {
+        rnd->sharedTextures.enviromentTex->Apply(TEXTURE_CUBE_ENVIROMENT_SLOT);
+      }
+      else
+      {
+        texture::ApplyNull(TEXTURE_CUBE_ENVIROMENT_SLOT);
+      }
+
+      if (rnd->sharedTextures.irradianceMap != nullptr)
+      {
+        rnd->sharedTextures.irradianceMap->Apply(TEXTURE_CUBE_IRRADIANCE_SLOT);
+      }
+      else
+      {
+        texture::ApplyNull(TEXTURE_CUBE_IRRADIANCE_SLOT);
+      }
+    }
+
     /* Activete primitive vertex array */
     UINT stride = sizeof(VERTEX);
     UINT offset = 0;

@@ -7,7 +7,7 @@ struct PS_INPUT
   float2 OutTexCoord : TEXCOORD0;
 };
 
-TextureCube Texture0 : register(t0);
+TextureCube EnviromentTexture : register(t5);
 SamplerState Sampler0 : register(s0);
 
 Texture2D Texture1 : register(t1);
@@ -20,6 +20,10 @@ cbuffer CommonConstBuf : register(b0)
   matrix MatrProj;
   float3 CamLoc;
   float Time;
+  int IsEnviromentTexture;
+  int IsIrradianceTexture;
+  int _pad0;
+  int _pad1;
 };
 
 cbuffer ConstBuffer : register(b2)
@@ -68,8 +72,8 @@ float3 Shade2(float3 P, float3 N, float2 T)
   // materials
   float3 albedo = Albedo;
   float3 dir = normalize(P - CamLoc);
-  if (IsTex0 == 1)
-    albedo = (Texture0.Sample(Sampler0, dir));
+  if (IsEnviromentTexture)
+    albedo = (EnviromentTexture.Sample(Sampler0, dir));
   return albedo;
 }
 

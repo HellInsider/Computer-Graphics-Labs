@@ -1,5 +1,7 @@
 #include "RENDER.H"
 #include "../Anim/ANIM.H"
+#include "../Stb_image/stb_image.h"
+#include "../Stb_image/stb_image_write.h"
 
 const D3D_SHADER_MACRO render::measure_luminance_system::SHADER_CONSTS[][2] =
 {
@@ -468,6 +470,8 @@ VOID render::FrameStart(VOID)
   d.MatrProj.fromPtr((float*)Cam.GetMatrProj());
   d.CamLoc = Cam.GetLoc();
   d.DeltaTime = anim::GetAnim()->GetDeltaTime();
+  d.IsEnviromentTexture = sharedTextures.enviromentTex != nullptr;
+  d.IsIrradianceTexture = sharedTextures.irradianceMap != nullptr;
 
   DriverIterface->UpdateSubresource(CommonConstBuf, 0, nullptr, &d, 0, 0);
   DriverIterface->VSSetConstantBuffers(CONST_BUF_SLOT_COMMON, 1, &CommonConstBuf);
@@ -571,6 +575,8 @@ render::~render(VOID)
 {
   if (DriverIterface) DriverIterface->ClearState();
 
+  if (sharedTextures.enviromentTex) delete sharedTextures.enviromentTex;
+  if (sharedTextures.irradianceMap) delete sharedTextures.irradianceMap;
   Textures.Clear();
   Materials.Clear();
   Shaders.Clear();
@@ -608,6 +614,115 @@ render::~render(VOID)
   /* Delete GDI data */
   ReleaseDC(hWnd, hDC);
 
+}
+
+static inline bool FileExists(std::string name)
+{
+  if (FILE* file = fopen(name.c_str(), "r"))
+  {
+    fclose(file);
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
+
+VOID render::EvaluateIrradiance(std::string filename)
+{
+  size_t p = filename.find_last_of('\\');
+  std::string path = filename.substr(0, p);
+  std::string cubeFaces[] = { "posx", "negx", "posy", "negy", "posz", "negz" };
+  INT W, H, n;
+  float* data = stbi_loadf(filename.c_str(), &W, &H, &n, 0);
+  if (!data)
+  {
+    MessageBox(NULL, "Failed to load equirectangular image", "ERROR", MB_OK);
+    return;
+  }
+
+  float *irradianseData = new float[6 * irradianseW * irradianseH * n];
+
+  for (int face = 0; face < 6; face++)
+    for (int y = 0; y < irradianseH; y++)
+      for (int x = 0; x < irradianseW; x++)
+      {
+        vec normal;
+        switch (face)
+        {
+        case 0:
+          normal = !vec(1.0, -(2.0 * float(y) / irradianseH - 1.0), 2.0 * float(x) / irradianseW - 1.0);
+          break;
+        case 1:
+          normal = !vec(-1.0, -(2.0 * float(y) / irradianseH - 1.0), -(2.0 * float(x) / irradianseW - 1.0));
+          break;
+        case 2:
+          normal = !vec(2.0 * float(x) / irradianseW - 1.0, 1.0, -(2.0 * float(y) / irradianseH - 1.0));
+          break;
+        case 3:
+          normal = !vec(2.0 * float(x) / irradianseW - 1.0, -1.0, 2.0 * float(y) / irradianseH - 1.0);
+          break;
+        case 4:
+          normal = !vec(2.0 * float(x) / irradianseW - 1.0, -(2.0 * float(y) / irradianseH - 1.0), -1.0);
+          break;
+        case 5:
+          normal = !vec(-(2.0 * float(x) / irradianseW - 1.0), -(2.0 * float(y) / irradianseH - 1.0), 1.0);
+          break;
+        }
+
+        vec dir = abs(normal.GetZ()) < 0.999 ? vec(0.0, 0.0, 1.0) : vec(1.0, 0.0, 0.0);
+        vec tangent = !(dir % normal);
+        vec binormal = normal % tangent;
+
+        int cur = face * irradianseW * irradianseH + y * irradianseW + x;
+        for (int comp = 0; comp < n; comp++)
+          irradianseData[cur * n + comp] = 0;
+
+        for (int i = 0; i < irradN1; i++)
+        {
+          for (int j = 0; j < irradN2; j++)
+          {
+            float phi = i * (2 * mth::PI / irradN1);
+            float theta = j * (mth::PI / 2.0 / irradN2);
+            vec tangentSample = vec(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));
+            vec sampleVec = tangent * tangentSample.GetX()  + binormal * tangentSample.GetY() + normal * tangentSample.GetZ();
+
+            vec2 uv = texture::DecartToEquirectangularProjection(sampleVec.GetX(), sampleVec.GetY(), sampleVec.GetZ());
+            
+            for (int comp = 0; comp < n; comp++)
+              irradianseData[cur * n + comp] += texture::Sample(uv, data, W, H, n, comp) * cos(theta) * sin(theta);
+          }
+        }
+
+        for (int comp = 0; comp < n; comp++)
+          irradianseData[cur * n + comp] = irradianseData[cur * n + comp] * (mth::PI / (float)(irradN1 * irradN2));
+      }
+
+  for (int i = 0; i < 6; i++)
+  {
+    stbi_write_hdr((path + "\\irr\\" + cubeFaces[i] + ".hdr").c_str(), irradianseW, irradianseH, n, (float*)(irradianseData + i * irradianseW * irradianseH * n));
+  }
+  stbi_image_free(data);
+
+  delete[] irradianseData;
+}
+
+VOID render::SetEnviroment(std::string filename)
+{
+  if (!FileExists("BIN\\Textures\\HDRI\\" + filename + "\\posx.hdr"))
+  {
+    texture::ProcessEquirectangularImage("BIN\\Textures\\HDRI\\" + filename + "\\" + filename + ".hdr");
+  }
+  
+  sharedTextures.enviromentTex = new texture("BIN\\Textures\\HDRI\\" + filename + "\\*.hdr", FALSE, texture::tex_type::TEX_TYPE_CUBE);
+  
+  if (!FileExists("BIN\\Textures\\HDRI\\" + filename + "\\irr\\posx.hdr"))
+  {
+    EvaluateIrradiance("BIN\\Textures\\HDRI\\" + filename + "\\" + filename + ".hdr");
+  }
+
+  sharedTextures.irradianceMap = new texture("BIN\\Textures\\HDRI\\" + filename + "\\irr\\*.hdr", FALSE, texture::tex_type::TEX_TYPE_CUBE);
 }
 
 shader* render::AddShader(const std::string& FileNamePrefix)

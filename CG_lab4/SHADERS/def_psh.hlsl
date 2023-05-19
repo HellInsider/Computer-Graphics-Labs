@@ -13,6 +13,7 @@ SamplerState Sampler0 : register(s0);
 Texture2D Texture1 : register(t1);
 SamplerState Sampler1: register(s1);
 
+TextureCube IrradianceTexture : register(t6);
 
 cbuffer CommonConstBuf : register(b0)
 {
@@ -20,6 +21,10 @@ cbuffer CommonConstBuf : register(b0)
   matrix MatrProj;
   float3 CamLoc;
   float Time;
+  int IsEnviromentTexture;
+  int IsIrradianceTexture;
+  int _pad0;
+  int _pad1;
 };
 
 cbuffer ConstBuffer : register(b2)
@@ -64,6 +69,7 @@ float4 AttenuatedLight(int LightIndex, float Dist)
   float3 a = RawLights[LightIndex].Atten;
   return RawLights[LightIndex].Color * (1.0 / (a.x + a.y * Dist + a.z * Dist * Dist));
 }
+
 float3 Shade2(float3 P, float3 N, float2 T)
 {
   float PI = 3.1415926;
@@ -85,6 +91,8 @@ float3 Shade2(float3 P, float3 N, float2 T)
 
   float nv = max(dot(V, N), 0.0);
 
+  float3 F0 = lerp(float3(0.04, 0.04, 0.04), albedo, metallic);
+
   // for each light
   for (int i = 0; i < NumLighs; i++)
   {
@@ -100,7 +108,6 @@ float3 Shade2(float3 P, float3 N, float2 T)
     nl = nl * isNL;
     float hv = max(dot(Halfway, V), 0.0);
 
-    float3 F0 = lerp(float3(0.04, 0.04, 0.04), albedo, metallic);
     float3 FresnelSchlick = F0 + ((float3(1.0, 1.0, 1.0) - F0) * pow(1.0 - hv, 5.0));
     if (LightingMode == 3)
       return FresnelSchlick * isNL;
@@ -125,6 +132,18 @@ float3 Shade2(float3 P, float3 N, float2 T)
     //color += F0 / 3.0;
   }
 
+  // for IBL
+  if (IsIrradianceTexture)
+  {
+    float3 F = F0 + (max((1.0 - roughness).xxx, F0) - F0) * pow(1.0 - nv, 5.0);
+    float3 kS = F;
+    float3 kD = 1 - kS;
+    kD *= 1 - metallic;
+    float3 irr = IrradianceTexture.Sample(Sampler0, N).rgb;
+    float3 Diffuse = albedo * irr;
+
+    color += kD * Diffuse;
+  }
   return color;
 }
 

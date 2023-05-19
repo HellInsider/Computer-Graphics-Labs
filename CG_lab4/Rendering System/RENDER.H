@@ -24,7 +24,10 @@ enum texture_slots
   TEXTURE_SCREENSPACE_SLOT,
   TEXTURE_CONSTANTS_SLOT,
   TEXTURE_CONSTANTS_SLOT_2,
-  TEXTURE_CUBE_ENV_SLOT,
+  
+  TEXTURE_CUBE_ENVIROMENT_SLOT,
+  TEXTURE_CUBE_IRRADIANCE_SLOT,
+
   k_NUM_OF_SLOTS
 };
 
@@ -34,6 +37,10 @@ struct common_cb_data
   raw_matr MatrProj;
   vec CamLoc;
   float DeltaTime;
+  int IsEnviromentTexture;
+  int IsIrradianceTexture;
+  int _pad0;
+  int _pad1;
 };
 
 const UINT MAX_LIGHTS = 16;
@@ -124,8 +131,17 @@ private:
 
   shader *ShdTonemap;
   prim *ScreenQuad;
+public:
+  struct
+  {
+    texture* enviromentTex = nullptr;
+    texture* irradianceMap = nullptr;
+  } sharedTextures;
+private:
+  UINT irradianseW = 32, irradianseH = 32, irradN1 = 200, irradN2 = 200;
 
   VOID InitSizeDependentResources( VOID );
+  VOID EvaluateIrradiance(std::string filename);
 
 public:
   camera Cam;       //Current camera
@@ -171,6 +187,8 @@ public:
     tonemapEnabled = (mode == LIGHT_MODE_DEFAULT);
     lightMode = mode;
   }
+
+  VOID SetEnviroment(std::string filename);
 
   ID3D11Device* GetDriver( VOID ) { return Driver; }
   ID3D11DeviceContext* GetDriverIterface(VOID) { return DriverIterface; }
